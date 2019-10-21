@@ -338,10 +338,10 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_plant_fba.run_plant_fba,
-                             name='plant_fba.run_plant_fba',
+        self.rpc_service.add(impl_plant_fba.integrate_abundances_with_metabolism,
+                             name='plant_fba.integrate_abundances_with_metabolism',
                              types=[dict])
-        self.method_authentication['plant_fba.run_plant_fba'] = 'required'  # noqa
+        self.method_authentication['plant_fba.integrate_abundances_with_metabolism'] = 'required'  # noqa
         self.rpc_service.add(impl_plant_fba.status,
                              name='plant_fba.status',
                              types=[dict])

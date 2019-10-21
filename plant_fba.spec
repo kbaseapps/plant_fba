@@ -7,10 +7,14 @@ module plant_fba {
         string report_name;
         string report_ref;
     } ReportResults;
+    
+    typedef structure {
+	string input_ws;
+	list<string> input_expression_matrices;
+	string input_fbamodel;
+    } IntegrateAbundancesParams;
 
-    /*
-        This example function accepts any number of parameters and returns results in a KBaseReport
-    */
-    funcdef run_plant_fba(mapping<string,UnspecifiedObject> params) returns (ReportResults output) authentication required;
-
+    funcdef integrate_abundances_with_metabolism(IntegrateAbundancesParams input_params)
+        returns (ReportResults output_report)
+	authentication required;
 };

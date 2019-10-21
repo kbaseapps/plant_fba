@@ -68,15 +68,20 @@ class plant_fbaTest(unittest.TestCase):
         return self.__class__.ctx
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-    def test_your_method(self):
+    def test_integrate_abundances_with_metabolism(self):
         # Prepare test objects in workspace if needed using
         # self.getWsClient().save_objects({'workspace': self.getWsName(),
         #                                  'objects': []})
-        #
-        # Run your method by
-        # ret = self.getImpl().your_method(self.getContext(), parameters...)
-        #
+
+        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'PlantSEED_v2',
+                                                                                      'input_expression_matrices': ['Ath_H13_DC3000'],
+                                                                                      'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
+                                                                                      'output_reaction_matrix':'Ath_H13_DC3000_Reaction_Matrix'})
+
+        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'PlantSEED_v2',
+                                                                                      'input_expression_matrices': ['Sly_Y15_DC3000'],
+                                                                                      'input_fbamodel': 'Slycopersicum_FBAModel',
+                                                                                      'output_reaction_matrix':'Sly_Y15_DC3000_Reaction_Matrix'})
+
         # Check returned data with
         # self.assertEqual(ret[...], ...) or other unittest methods
-        ret = self.getImpl().run_plant_fba(self.getContext(), {'workspace_name': self.getWsName(),
-                                                                    'parameter_1': 'Hello World!'})
