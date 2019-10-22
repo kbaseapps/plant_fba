@@ -1,0 +1,79 @@
+{
+    "ver": "0.0.1",
+    "authors": [
+        "seaver"
+    ],
+    "contact": "http://kbase.us/contact-us/",
+    "categories": ["active","metabolic_modeling"],
+    "widgets": {
+        "input": null,
+        "output": null
+    },
+    "parameters": [ 
+        {
+            "id": "expression_matrix",
+	    "optional": false,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "valid_ws_types": [ "KBaseFeatureValues.ExpressionMatrix" ]
+            }
+        },
+        {
+            "id": "fba_model",
+	    "optional": false,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "valid_ws_types": [ "KBaseFBA.FBAModel" ]
+            }
+        },
+        {
+            "id": "reaction_matrix",
+            "optional": false,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+	    	"is_output_name" : true,
+                "valid_ws_types": [ "KBaseFeatureValues.ExpressionMatrix" ]
+            }
+        }
+    ],
+    "behavior": {
+        "service-mapping": {
+            "url": "",
+            "name": "plant_fba",
+            "method": "integrate_abundances_with_metabolism",
+            "input_mapping": [
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "input_ws"
+                },{
+                    "input_parameter": "expression_matrix",
+                    "target_property": "input_expression_matrix"
+                },{
+                    "input_parameter": "fba_model",
+                    "target_property": "input_fbamodel"
+                },{
+                    "input_parameter": "reaction_matrix",
+                    "target_property": "output_reaction_matrix"
+                }
+            ],
+            "output_mapping": [
+                {
+                    "service_method_output_path": [0,"report_name"],
+                    "target_property": "report_name"
+                },{
+                    "service_method_output_path": [0,"report_ref"],
+                    "target_property": "report_ref"
+                }
+            ]
+        }
+    },
+    "job_id_output_field": "docker"
+}

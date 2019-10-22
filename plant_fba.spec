@@ -10,8 +10,9 @@ module plant_fba {
     
     typedef structure {
 	string input_ws;
-	list<string> input_expression_matrices;
+	string input_expression_matrix;
 	string input_fbamodel;
+	string output_reaction_matrix;
     } IntegrateAbundancesParams;
 
     funcdef integrate_abundances_with_metabolism(IntegrateAbundancesParams input_params)
