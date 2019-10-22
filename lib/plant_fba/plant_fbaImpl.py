@@ -76,7 +76,7 @@ class plant_fba:
         print("Number of reactions: "+str(len(model_obj['data']['modelreactions'])))
 
         # Fetch expression data
-        expdata_ref = input_params['input_ws']+'/'+input_params['input_expression_matrices'][0]
+        expdata_ref = input_params['input_ws']+'/'+input_params['input_expression_matrix']
         expdata_obj = self.dfu.get_objects({'object_refs': [expdata_ref]})['data'][0]
         exp_ids = expdata_obj['data']['data']['col_ids']
         ftr_ids = expdata_obj['data']['data']['row_ids']
