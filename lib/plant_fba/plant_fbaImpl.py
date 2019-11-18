@@ -224,9 +224,15 @@ class plant_fba:
                                           'charge':array[4]}
 
         #Retrieve Template, and compile indexes of roles and complexes
+        if('template_ws' not in input_params or input_params['template_ws'] == ''):
+            input_params['template_ws'] = 'NewKBaseModelTemplates'
+
+        if('template' not in input_params or input_params['template'] == ''):
+            input_params['template'] = 'PlantModelTemplate'
+
         template_ref = input_params['template_ws']+'/'+input_params['template']
         template_obj = self.dfu.get_objects({'object_refs': [template_ref]})['data'][0]
-
+        
         searchroles_dict = dict()
         roles_dict = dict()
         for role in template_obj['data']['roles']:
@@ -470,7 +476,10 @@ class plant_fba:
         model_ws_object = {'type' : 'KBaseFBA.FBAModel', 'name' : input_params['output_fbamodel'],
                            'data' : new_model_obj }
 
-        ws_id = self.dfu.ws_name_to_id(input_params['input_ws'])
+        if('output_ws' not in input_params or input_params['output_ws'] == ''):
+            input_params['output_ws']=input_params['input_ws']
+
+        ws_id = self.dfu.ws_name_to_id(input_params['output_ws'])
         self.dfu.save_objects({'id':ws_id,'objects':[model_ws_object]})
 
         output_report = dict()

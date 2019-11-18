@@ -76,11 +76,12 @@ class plant_fbaTest(unittest.TestCase):
         ret = self.getImpl().reconstruct_plant_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
                                                                               'input_genome': 'PlantSEED_Arabidopsis',
 
-                                                                              'output_ws': 'plant_fba_testing',
+                                                                              #'output_ws': 'plant_fba_testing',
                                                                               'output_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
 
-                                                                              'template_ws': 'NewKBaseModelTemplates',
-                                                                              'template': 'PlantModelTemplate'})
+                                                                              #'template_ws': 'NewKBaseModelTemplates',
+                                                                              #'template': 'PlantModelTemplate'
+                                                                              })
 
         # Check returned data with
         # self.assertEqual(ret[...], ...) or other unittest methods
