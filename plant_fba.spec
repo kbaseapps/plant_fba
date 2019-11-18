@@ -18,4 +18,19 @@ module plant_fba {
     funcdef integrate_abundances_with_metabolism(IntegrateAbundancesParams input_params)
         returns (ReportResults output_report)
 	authentication required;
+
+    typedef structure {
+	string input_ws;
+	string input_genome;
+
+	string output_ws;
+	string output_fbamodel;
+
+	string template;
+	string template_ws;
+    } ReconstructMetabolismParams;
+
+    funcdef reconstruct_plant_metabolism(ReconstructMetabolismParams input_params)
+        returns (ReportResults output_report)
+	authentication required;
 };

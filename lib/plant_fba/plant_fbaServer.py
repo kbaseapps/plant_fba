@@ -342,6 +342,10 @@ class Application(object):
                              name='plant_fba.integrate_abundances_with_metabolism',
                              types=[dict])
         self.method_authentication['plant_fba.integrate_abundances_with_metabolism'] = 'required'  # noqa
+        self.rpc_service.add(impl_plant_fba.reconstruct_plant_metabolism,
+                             name='plant_fba.reconstruct_plant_metabolism',
+                             types=[dict])
+        self.method_authentication['plant_fba.reconstruct_plant_metabolism'] = 'required'  # noqa
         self.rpc_service.add(impl_plant_fba.status,
                              name='plant_fba.status',
                              types=[dict])

@@ -1,0 +1,20 @@
+PsId	Id	Name	Abbreviation	SUBA	PPDB	AraCyc
+e	e	Extracellular	extracellular	extracellular	extracellular	CCI-EXTRACELLULAR-PL,CCO-MEMBRANE,CCI-PM-PLANT-PL
+w	w	Cell Wall	cellwall	plasma membrane	plasma membrane	CCO-PLASTID,CCI-CHLOROPLAST-PL,CCO-PLASTID-STR,CCI-CHLOR-STR-PL
+c	c	Cytosol	cytosol	cytoskeleton,cytosol	cytoskeleton,cytosol,oil bodies	CCI-CYTOSOL-PL,CCO-CYTOPLASM
+g	g	Golgi	golgi	golgi	golgi	CCI-GOLGI-PL
+r	r	Endoplasmic Reticulum	endoplasm	endoplasmic reticulum	ER,oil bodies	CCO-ER,CCO-ER-MEM
+f	rl	ER lumen	erlumen	endoplasmic reticulum		CCO-ER-LUM,CCO-ER-GOLGI-VES
+n	n	Nucleus	nucleus	nucleus	nucleus	CCI-NUCLEUS-PL
+v	v	Vacuole	vacuole	vacuole	vacuole,vacuole-tonoplast	CCO-VACUOLE,CCO-VAC-MEM
+x	x	Peroxisome	peroxisome	peroxisome	peroxisome	CCI-PEROXISOME-PL
+s	do	Plastid Outer Membrane	plastidouter		envelope-outer,envelope-outer-integral	
+t	ds	Plastid Intermembrane Space	plastidinter		envelope,envelope-intermembranespace	CCO-CHLOR-MEM,CCO-PLASTID-MEM,CCO-PLASTID-ENV,CCI-CHLOR-ENV-PL
+u	di	Plastid Inner Membrane	plastidinner		envelope-inner,envelope-inner-integral,envelope-inner-peripheral-stroma-side	
+d	d	Stroma	plastid	plastid	plastid,plastid nucleoid,plastid ribosome,plastid stroma	CCO-PLASTID,CCI-CHLOROPLAST-PL,CCO-PLASTID-STR,CCI-CHLOR-STR-PL
+y	dt	Thylakoid	thylakoid		plastoglobules,thylakoid-integral,thylakoid-peripheral-lumenal-side,thylakoid-peripheral-stromal-side	CCO-CHL-THY-MEM
+z	dl	Thylakoid Lumen	lumen	CCO-CHLOR-THY
+i	mo	Mitochondria Outer Membrane	mitoouter			
+j	ms	Mitochondria Intermembrane Space	mitointer			CCO-MIT-MEM
+k	mi	Mitochondria Inner Membrane	mitoinner			CCI-MIT-IMEM-PL
+m	m	Matrix	mitochondria	mitochondrion	mitochondria	CCI-MIT-PL,CCI-MIT-LUM-PL

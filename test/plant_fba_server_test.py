@@ -73,15 +73,14 @@ class plant_fbaTest(unittest.TestCase):
         # self.getWsClient().save_objects({'workspace': self.getWsName(),
         #                                  'objects': []})
 
-        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'PlantSEED_v2',
-                                                                                      'input_expression_matrices': ['Ath_H13_DC3000'],
-                                                                                      'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
-                                                                                      'output_reaction_matrix':'Ath_H13_DC3000_Reaction_Matrix'})
+        ret = self.getImpl().reconstruct_plant_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
+                                                                              'input_genome': 'PlantSEED_Arabidopsis',
 
-        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'PlantSEED_v2',
-                                                                                      'input_expression_matrices': ['Sly_Y15_DC3000'],
-                                                                                      'input_fbamodel': 'Slycopersicum_FBAModel',
-                                                                                      'output_reaction_matrix':'Sly_Y15_DC3000_Reaction_Matrix'})
+                                                                              'output_ws': 'plant_fba_testing',
+                                                                              'output_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
+
+                                                                              'template_ws': 'NewKBaseModelTemplates',
+                                                                              'template': 'PlantModelTemplate'})
 
         # Check returned data with
         # self.assertEqual(ret[...], ...) or other unittest methods

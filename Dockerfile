@@ -15,6 +15,9 @@ COPY ./ /kb/module
 RUN mkdir -p /kb/module/work
 RUN chmod -R a+rw /kb/module
 
+COPY ./data/compartments.txt /kb/module/data/
+COPY ./data/compounds.txt /kb/module/data/
+COPY ./data/reactions.txt /kb/module/data/
 WORKDIR /kb/module
 
 RUN make all
