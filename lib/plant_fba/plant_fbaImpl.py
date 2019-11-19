@@ -61,7 +61,6 @@ class plant_fba:
         #END_CONSTRUCTOR
         pass
 
-
     def integrate_abundances_with_metabolism(self, ctx, input_params):
         """
         :param input_params: instance of type "IntegrateAbundancesParams" ->
@@ -162,8 +161,10 @@ class plant_fba:
                 rxndata_row.append(reaction_score)
                 rxndata_obj['values'].append(rxndata_row)
 
-        rxnvalue_matrix = {'type':'KBaseFeatureValues.ExpressionMatrix','name':input_params['output_reaction_matrix'],
-                           'data':{'scale':'1.0','type':'reaction expression score','data':rxndata_obj}}
+        rxnvalue_matrix = {'type':'KBaseMatrices.ReactionMatrix','name':input_params['output_reaction_matrix'],
+                           'data':{'scale':'raw','description':'reaction expression score',
+                                   'fbamodel_ref':model_ref,
+                                   'data':rxndata_obj}}
 
         ws_id = self.dfu.ws_name_to_id(input_params['input_ws'])
         self.dfu.save_objects({'id':ws_id,'objects':[rxnvalue_matrix]})

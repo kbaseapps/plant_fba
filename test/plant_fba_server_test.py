@@ -69,6 +69,13 @@ class plant_fbaTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def test_integrate_abundances_with_metabolism(self):
+
+        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
+                                                                                      'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
+                                                                                      'input_expression_matrix': 'Ath_H13_DC3000',
+                                                                                      'output_reaction_matrix': 'Ath_H13_DC3000_Reaction_Matrix'})
+
+#    def test_reconstruct_plant_metabolism(self):
         # Prepare test objects in workspace if needed using
         # self.getWsClient().save_objects({'workspace': self.getWsName(),
         #                                  'objects': []})
