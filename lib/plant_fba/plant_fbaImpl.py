@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import copy
+import uuid
 
 from installed_clients.KBaseReportClient import KBaseReport
 from installed_clients.DataFileUtilClient import DataFileUtil
@@ -56,6 +57,7 @@ class plant_fba:
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
         self.callback_url = os.environ['SDK_CALLBACK_URL']
+        self.token = os.environ['KB_AUTH_TOKEN']
         self.shared_folder = config['scratch']
         self.dfu = DataFileUtil(self.callback_url)
         #END_CONSTRUCTOR
@@ -167,9 +169,52 @@ class plant_fba:
                                    'data':rxndata_obj}}
 
         ws_id = self.dfu.ws_name_to_id(input_params['input_ws'])
-        self.dfu.save_objects({'id':ws_id,'objects':[rxnvalue_matrix]})
+        saved_matrix_dict = self.dfu.save_objects({'id':ws_id,'objects':[rxnvalue_matrix]})[0]
+
+        #Compose report string
+        html_string="<html><head><title>Integrate Abundances with Metabolism Report</title></head><body>"
+        html_string+="<p>The \"Integrate Abundances with Metabolism\" app has finished running:</br>"
+        html_string+="The app integrated the gene abundances from the "+input_params['input_expression_matrix']+" ExpressionMatrix with the "
+        html_string+=input_params['input_fbamodel']+" FBAModel, resulting in the "+input_params['output_reaction_matrix']+" ReactionMatrix.</p>"
+
+        #Make folder for report files
+        uuid_string = str(uuid.uuid4())
+        report_file_path=os.path.join(self.shared_folder,uuid_string)
+        os.mkdir(report_file_path)
+
+        #Write html files
+        with open(os.path.join(report_file_path,"index.html"),'w') as index_file:
+            index_file.write(html_string)
+
+        #Cache it in shock as an archive
+        upload_info = self.dfu.file_to_shock({'file_path': report_file_path,
+                                              'pack': 'zip'})
+
+        #Prepare report parameters
+        report_params = { 'direct_html_link_index' : 0, #Use to refer to index of 'html_links'
+                          'workspace_name' : input_params['input_ws'],
+                          'report_object_name' : 'plant_fba_' + uuid_string,
+                          'objects_created' : [],
+                          'html_links' : [] }
+
+        #Html Link object
+        html_link = {'shock_id' : upload_info['shock_id'],
+                     'name' : 'index.html',
+                     'label' : 'html files',
+                     'description' : 'HTML files'}
+        report_params['html_links'].append(html_link)
+
+        #Objects created object
+        saved_matrix_ref = "{}/{}/{}".format(saved_matrix_dict[6],saved_matrix_dict[0],saved_matrix_dict[4])
+        saved_matrix_desc = "Reaction matrix: "+input_params['output_reaction_matrix']
+        report_params['objects_created'].append({'ref':saved_matrix_ref,'description':saved_matrix_desc})
+
+        kbase_report_client = KBaseReport(self.callback_url, token=self.token)
+        report_client_output = kbase_report_client.create_extended_report(report_params)
 
         output_report=dict()
+        output_report['report_name']=report_client_output['name']
+        output_report['report_ref']=report_client_output['ref']
 
         #END integrate_abundances_with_metabolism
 
@@ -481,9 +526,52 @@ class plant_fba:
             input_params['output_ws']=input_params['input_ws']
 
         ws_id = self.dfu.ws_name_to_id(input_params['output_ws'])
-        self.dfu.save_objects({'id':ws_id,'objects':[model_ws_object]})
+        saved_model_list=self.dfu.save_objects({'id':ws_id,'objects':[model_ws_object]})[0]
 
-        output_report = dict()
+        #Compose report string
+        html_string="<html><head><title>Reconstruct Plant Metabolism Report</title></head><body>"
+        html_string+="<p>The \"Reconstruct Plant Metabolism\" app has finished running:</br>"
+        html_string+="The app reconstructed the primary metabolism from the "
+        html_string+="enzymatic annotations in "+input_params['input_genome']+"</p>"
+
+        #Make folder for report files
+        uuid_string = str(uuid.uuid4())
+        report_file_path=os.path.join(self.shared_folder,uuid_string)
+        os.mkdir(report_file_path)
+
+        #Write html files
+        with open(os.path.join(report_file_path,"index.html"),'w') as index_file:
+            index_file.write(html_string)
+
+        #Cache it in shock as an archive
+        upload_info = self.dfu.file_to_shock({'file_path': report_file_path,
+                                              'pack': 'zip'})
+
+        #Prepare report parameters
+        report_params = { 'direct_html_link_index' : 0, #Use to refer to index of 'html_links'
+                          'workspace_name' : input_params['input_ws'],
+                          'report_object_name' : 'plant_fba_' + uuid_string,
+                          'objects_created' : [],
+                          'html_links' : [] }
+
+        #Html Link object
+        html_link = {'shock_id' : upload_info['shock_id'],
+                     'name' : 'index.html',
+                     'label' : 'html files',
+                     'description' : 'HTML files'}
+        report_params['html_links'].append(html_link)
+
+        #Objects created object
+        saved_model_ref = "{}/{}/{}".format(saved_model_list[6],saved_model_list[0],saved_model_list[4])
+        saved_model_desc = "FBAModel: "+input_params['output_fbamodel']
+        report_params['objects_created'].append({'ref':saved_model_ref,'description':saved_model_desc})
+
+        kbase_report_client = KBaseReport(self.callback_url, token=self.token)
+        report_client_output = kbase_report_client.create_extended_report(report_params)
+
+        output_report=dict()
+        output_report['report_name']=report_client_output['name']
+        output_report['report_ref']=report_client_output['ref']
 
         #END reconstruct_plant_metabolism
 

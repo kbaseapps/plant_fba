@@ -75,7 +75,7 @@ class plant_fbaTest(unittest.TestCase):
                                                                                       'input_expression_matrix': 'Ath_H13_DC3000',
                                                                                       'output_reaction_matrix': 'Ath_H13_DC3000_Reaction_Matrix'})
 
-#    def test_reconstruct_plant_metabolism(self):
+    def test_reconstruct_plant_metabolism(self):
         # Prepare test objects in workspace if needed using
         # self.getWsClient().save_objects({'workspace': self.getWsName(),
         #                                  'objects': []})
