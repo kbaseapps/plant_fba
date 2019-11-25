@@ -43,8 +43,7 @@
          "default_values" : [
             ""
          ],
-         "id" : "output_fbamodel",
-         "advanced" : false
+         "id" : "output_fbamodel"
       }
    ], 
    "behavior" : {
