@@ -284,7 +284,7 @@ class plant_fba:
         for role in template_obj['data']['roles']:
             searchrole = self.convert_search_role(role['name'])
             searchroles_dict[searchrole]=role['id']
-            roles_dict[role['id']]=role['name']
+            roles_dict[role['id']]=role
 
         complex_dict = dict()
         for cpx in template_obj['data']['complexes']:
@@ -315,6 +315,10 @@ class plant_fba:
 
                         if(role_id not in role_cpt_ftr_dict):
                             role_cpt_ftr_dict[role_id]=dict()
+
+                        #Defaults to cytosol
+                        if(len(function_cpt_list)==0):
+                            function_cpt_list.append('cytosol')
 
                         for cpt in function_cpt_list:
                             abbrev_cpt=cpt
@@ -388,8 +392,16 @@ class plant_fba:
                                 new_subunit_dict = copy.deepcopy(default_subunit_dict)
                                 new_subunit_dict['triggering'] = cpxrole['triggering']
                                 new_subunit_dict['optionalSubunit'] = cpxrole['optional_role']
-                                new_subunit_dict['role'] = roles_dict[role_id]
-                                
+                                new_subunit_dict['role'] = roles_dict[role_id]['name']
+
+                                if(len(roles_dict[role_id]['features'])>0):
+                                    new_subunit_dict['note'] = 'Features characterized and annotated'
+                                else:
+                                    #This never happens as of Fall 2019
+                                    print("Warning: "+roles_dict[role_id]['name']+" is apparently uncharacterized!")
+                                    new_subunit_dict['note'] = 'Features uncharacterized but annotated'
+                                    pass
+
                                 for ftr in role_cpt_ftr_dict[role_id][role_cpt]:
                                     feature_ref = "~/genome/features/id/"+ftr
                                     new_subunit_dict['feature_refs'].append(feature_ref)
@@ -397,11 +409,35 @@ class plant_fba:
                                 matched_role_dict[role_id]=1
                                 subunits_list.append(new_subunit_dict)
 
+                    if(role_id not in role_cpt_ftr_dict and template_rxn['type'] == 'universal'):
+                        #This should still be added, with zero features to indicate the universality of the role in plant primary metabolism
+                        new_subunit_dict = copy.deepcopy(default_subunit_dict)
+                        new_subunit_dict['triggering'] = cpxrole['triggering']
+                        new_subunit_dict['optionalSubunit'] = cpxrole['optional_role']
+                        new_subunit_dict['role'] = roles_dict[role_id]['name']
+
+                        #Un-necessary, but explicitly stated
+                        new_subunit_dict['feature_refs']=[]
+
+                        if(len(roles_dict[role_id]['features'])==0):
+                            new_subunit_dict['note'] = 'Features uncharacterized and unannotated'
+                        else:
+                            #As of Fall 2019, this includes two reactions
+                            new_subunit_dict['note'] = "Features characterized but unannotated"
+                            print("Missing annotation: ",cpx_id,role_id,roles_dict[role_id])
+
+                        matched_role_dict[role_id]=1
+                        subunits_list.append(new_subunit_dict)
+                        
                 if(complex_present == True):
+                    #Check to see if members of a detected protein complex are missing
+                    #and add them if so, to round off the complex
+                    #This will only happen to a complex that is conditional (see above)
                     for cpxrole in complex_dict[cpx_id]['complexroles']:
                         role_id = cpxrole['templaterole_ref'].split('/')[-1]
                         
                         if(role_id not in matched_role_dict):
+                            print("Gapfilling complex: ",cpx_id,roles_dict[role_id])
                             new_subunit_dict = copy.deepcopy(default_subunit_dict)
                             new_subunit_dict['triggering'] = cpxrole['triggering']
                             new_subunit_dict['optionalSubunit'] = cpxrole['optional_role']
