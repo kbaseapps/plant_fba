@@ -115,21 +115,39 @@ class plant_fba:
             rxndata_obj['row_ids'].append(mdlrxn_obj['id'])
 
         minmax_expscore_dict=dict()
+        print_data=False
         for mdlrxn in range(len(model_obj['data']['modelreactions'])):
             mdlrxn_obj=model_obj['data']['modelreactions'][mdlrxn]
     
+            if('rxn00122' in mdlrxn_obj['id']):
+                print_data=False
+            else:
+                print_data=False
+
+            if(print_data is True):
+                print("DATA 1: "+mdlrxn_obj['id'])
+
             rxndata_row=list()
             for experiment in range(len(exp_ids)):
                 if(exp_ids[experiment] not in minmax_expscore_dict):
                     minmax_expscore_dict[exp_ids[experiment]]={'max':-sys.maxsize-1,'min':sys.maxsize}
 
+                if(print_data is True):
+                    print("DATA 2: "+mdlrxn_obj['id'],experiment,exp_ids[experiment],minmax_expscore_dict[exp_ids[experiment]])
+
                 # Maximal gene expression for a reaction
                 reaction_score='nan'
                 for prt in mdlrxn_obj['modelReactionProteins']:
 
+                    if(print_data is True):
+                        print("DATA 3: "+mdlrxn_obj['id'],exp_ids[experiment],str(reaction_score))
+
                     # Minimal gene expression for a complex
                     complex_score='nan'
                     for sbnt in prt['modelReactionProteinSubunits']:
+
+                        if(print_data is True):
+                            print("DATA 4: "+mdlrxn_obj['id'],exp_ids[experiment],str(complex_score))
 
                         # Maximal gene expression for a subunit
                         subunit_score='nan'
@@ -137,31 +155,50 @@ class plant_fba:
                             feature=feature.split('/')[-1]
                             ftr_score = expdata_obj['data']['data']['values'][feature_lookup_dict[feature]][experiment]
                             
+                            if(print_data is True):
+                                print("DATA 5: "+mdlrxn_obj['id'],exp_ids[experiment],feature,ftr_score)
+
                             if(ftr_score < minmax_expscore_dict[exp_ids[experiment]]['min']):
                                 minmax_expscore_dict[exp_ids[experiment]]['min'] = ftr_score
 
                             if(ftr_score > minmax_expscore_dict[exp_ids[experiment]]['max']):
                                 minmax_expscore_dict[exp_ids[experiment]]['max'] = ftr_score
 
+                            if(print_data is True):
+                                print("DATA 6: "+mdlrxn_obj['id'],experiment,exp_ids[experiment],minmax_expscore_dict[exp_ids[experiment]])
+
                             # Maximal gene expression for a subunit
                             if(subunit_score == 'nan' or subunit_score < ftr_score):
                                 subunit_score = ftr_score
+
+                                if(print_data is True):
+                                    print("DATA 7: "+mdlrxn_obj['id'],exp_ids[experiment],subunit_score)
                 
                         # Minimal gene expression for a complex
                         if(subunit_score != 'nan'):
                             if(complex_score == 'nan' or complex_score > subunit_score):
                                 complex_score = subunit_score
 
+                                if(print_data is True):
+                                    print("DATA 8: "+mdlrxn_obj['id'],exp_ids[experiment],complex_score)
+
                     # Maximal gene expression for a reaction
                     if(complex_score != 'nan'):
                         if(reaction_score == 'nan' or reaction_score < complex_score):
                             reaction_score = complex_score
+
+                            if(print_data is True):
+                                print("DATA 9: "+mdlrxn_obj['id'],exp_ids[experiment],reaction_score)
             
                 if(reaction_score == 'nan'):
                     reaction_score = float(-sys.maxsize-1)
 
+                if(print_data is True):
+                    print("DATA 10: "+mdlrxn_obj['id'],exp_ids[experiment],reaction_score)
+
                 rxndata_row.append(reaction_score)
-                rxndata_obj['values'].append(rxndata_row)
+                print("ROW: "+str(len(rxndata_row)))
+            rxndata_obj['values'].append(rxndata_row)
 
         rxnvalue_matrix = {'type':'KBaseMatrices.ReactionMatrix','name':input_params['output_reaction_matrix'],
                            'data':{'scale':'raw','description':'reaction expression score',
