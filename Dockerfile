@@ -8,6 +8,11 @@ MAINTAINER KBase Developer
 
 # RUN apt-get update
 
+RUN conda install -c conda-forge phantomjs
+
+RUN pip install --upgrade pip && \
+    pip install bokeh && \
+    pip install selenium
 
 # -----------------------------------------
 
