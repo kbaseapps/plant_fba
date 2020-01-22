@@ -7,6 +7,13 @@ import re
 import copy
 import uuid
 
+#For testing Bokeh
+from bokeh.io import output_file, save, export_svgs, export_png
+from bokeh.models import ColumnDataSource, FactorRange
+from bokeh.plotting import figure
+from bokeh.transform import factor_cmap
+from bokeh.palettes import Spectral6
+
 from installed_clients.KBaseReportClient import KBaseReport
 from installed_clients.DataFileUtilClient import DataFileUtil
 
@@ -49,6 +56,47 @@ class plant_fba:
         searchrole = re.sub(r'\(ec[\d-]+\.[\d-]\.[\d-]\.[\d-]\)', '', searchrole)
 
         return searchrole
+
+    def generate_figure(self,file_path):
+        print("Generating Bokeh Figures")
+
+        fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
+        years = ['2015', '2016', '2017']
+
+        data = {'fruits' : fruits,
+                '2015'   : [2, 1, 4, 3, 2, 4],
+                '2016'   : [5, 3, 3, 2, 4, 6],
+                '2017'   : [3, 2, 4, 4, 5, 3]}
+
+        # this creates [ ("Apples", "2015"), ("Apples", "2016"), ("Apples", "2017"), ("Pears", "2015), ... ]
+        x = [ (fruit, year) for fruit in fruits for year in years ]
+        counts = sum(zip(data['2015'], data['2016'], data['2017']), ()) # like an hstack
+
+        source = ColumnDataSource(data=dict(x=x, counts=counts))
+
+        p = figure(x_range=FactorRange(*x), plot_height=250, title="Fruit Counts by Year",
+                   toolbar_location=None, tools="")
+
+        p.vbar(x='x', top='counts', width=0.9, source=source, line_color="white",
+
+               # use the palette to colormap based on the the x[1:2] values
+               fill_color=factor_cmap('x', palette=Spectral6, factors=years, start=1, end=2))
+
+        p.y_range.start = 0
+        p.x_range.range_padding = 0.1
+        p.xaxis.major_label_orientation = 1
+        p.xgrid.grid_line_color = None
+
+        file_name='bokeh_figure'
+        figure_html_name = file_name+".html"
+        figure_html_path = os.path.join(file_path,figure_html_name)
+        output_file(figure_html_path)
+        save(p)
+
+        figure_png_name = file_name+".png"
+        figure_png_path = os.path.join(file_path,figure_png_name)
+        export_png(p,filename=figure_png_path)
+        return (figure_html_name,figure_png_name)
 
     #END_CLASS_HEADER
 
@@ -115,10 +163,23 @@ class plant_fba:
             rxndata_obj['row_ids'].append(mdlrxn_obj['id'])
 
         minmax_expscore_dict=dict()
+        reaction_classification_dict=dict()
         print_data=False
         for mdlrxn in range(len(model_obj['data']['modelreactions'])):
             mdlrxn_obj=model_obj['data']['modelreactions'][mdlrxn]
     
+            #Reactions in one compartment vs reactions in multiple compartments
+            #Reactions with multi-subunit enzymes vs Reactions with individual enzymes
+            [base_rxn,cpt_id]=mdlrxn_obj['id'].split('_')
+            if(base_rxn not in reaction_classification_dict):
+                reaction_classification_dict[base_rxn]={'cpts':{},'single':0,'multiple':0}
+
+            for prt in mdlrxn_obj['modelReactionProteins']:
+                if(len(prt['modelReactionProteinSubunits'])==1):
+                    reaction_classification_dict[base_rxn]['single']+=1
+                if(len(prt['modelReactionProteinSubunits'])>1):
+                    reaction_classification_dict[base_rxn]['multiple']+=1
+
             if('rxn00122' in mdlrxn_obj['id']):
                 print_data=False
             else:
@@ -192,13 +253,35 @@ class plant_fba:
             
                 if(reaction_score == 'nan'):
                     reaction_score = float(-sys.maxsize-1)
+                else:
+                    if(cpt_id not in reaction_classification_dict[base_rxn]['cpts']):
+                        reaction_classification_dict[base_rxn]['cpts'][cpt_id]=[]
+                    reaction_classification_dict[base_rxn]['cpts'][cpt_id].append({exp_ids[experiment]:reaction_score})
 
                 if(print_data is True):
                     print("DATA 10: "+mdlrxn_obj['id'],exp_ids[experiment],reaction_score)
 
                 rxndata_row.append(reaction_score)
-                print("ROW: "+str(len(rxndata_row)))
             rxndata_obj['values'].append(rxndata_row)
+
+        #A = single compartment, single subunits
+        #B = multiple compartments, single subunits
+        #C = single compartment, multiple subunits
+        #D = multiple compartments, multple subunits
+        row_counts={'A':0,'B':0,'C':0,'D':0}
+        for rxn in sorted(reaction_classification_dict):
+            rc_dict = reaction_classification_dict[rxn]
+#            print(rc_dict)
+            if(len(rc_dict['cpts'])==1 and rc_dict['single']>0):
+                row_counts['A']+=1
+            if(len(rc_dict['cpts'])>1 and rc_dict['single']>0):
+                row_counts['B']+=1
+            if(len(rc_dict['cpts'])==1 and rc_dict['multiple']>0):
+                row_counts['C']+=1
+            if(len(rc_dict['cpts'])>1 and rc_dict['multiple']>0):
+                row_counts['D']+=1
+
+#        print(row_counts)
 
         rxnvalue_matrix = {'type':'KBaseMatrices.ReactionMatrix','name':input_params['output_reaction_matrix'],
                            'data':{'scale':'raw','description':'reaction expression score',
@@ -208,20 +291,49 @@ class plant_fba:
         ws_id = self.dfu.ws_name_to_id(input_params['input_ws'])
         saved_matrix_dict = self.dfu.save_objects({'id':ws_id,'objects':[rxnvalue_matrix]})[0]
 
-        #Compose report string
-        html_string="<html><head><title>Integrate Abundances with Metabolism Report</title></head><body>"
-        html_string+="<p>The \"Integrate Abundances with Metabolism\" app has finished running:</br>"
-        html_string+="The app integrated the gene abundances from the "+input_params['input_expression_matrix']+" ExpressionMatrix with the "
-        html_string+=input_params['input_fbamodel']+" FBAModel, resulting in the "+input_params['output_reaction_matrix']+" ReactionMatrix.</p>"
-
         #Make folder for report files
         uuid_string = str(uuid.uuid4())
         report_file_path=os.path.join(self.shared_folder,uuid_string)
         os.mkdir(report_file_path)
 
+        #Compose report string
+        html_lines = list()
+        html_lines.append('<h3 style="text-align: center">Integrate Abundances with Metabolism Report</h3>')
+        html_lines.append("<p>The \"Integrate Abundances with Metabolism\" app has finished running:</br>")
+        html_lines.append("The app integrated the gene abundances from the "+input_params['input_expression_matrix']+" ExpressionMatrix with the ")
+        html_lines.append(input_params['input_fbamodel']+" FBAModel, resulting in the "+input_params['output_reaction_matrix']+" ReactionMatrix.</p>")
+
+        #Generate figures
+        (figure_html,figure_png) = self.generate_figure(report_file_path)
+        html_lines.append("<iframe src=\""+figure_html+"\" width=\"50%\" height=\"50%\"></iframe>")
+
+        html_lines.append('<table class="table table-bordered table-striped">')
+
+        #Reaction Compartment Number of Enzymatic Subunits Experiments
+        internal_header_line = "</td><td>".join(['Reaction','Compartment','# Subunits'] + exp_ids)
+        html_lines.append('<thead>')
+        html_lines.append('<tr><td>'+internal_header_line+'</td></tr>')
+        html_lines.append('</thead>')
+
+        html_lines.append('<tbody>')
+        for rxn in sorted(reaction_classification_dict):
+            rc_dict = reaction_classification_dict[rxn]
+            for cpt in rc_dict['cpts']:
+                scores = list()
+                for exp in rc_dict['cpts'][cpt]:
+                    scores.append(str(list(exp.values())[0]))
+                row = '</td><td>'.join([rxn,cpt,'0'] + scores)
+                html_lines.append('<tr><td>'+row+'</td></tr>')
+        html_lines.append('</tbody>')
+        html_lines.append('</table>')
+        html_string="\n".join(html_lines)
+
+        with open(os.path.join('/kb/module/data','app_report_templates','integrate_abundances_report_template.html')) as report_template_file:
+            report_string = report_template_file.read().replace('*TABLES*', html_string)
+
         #Write html files
         with open(os.path.join(report_file_path,"index.html"),'w') as index_file:
-            index_file.write(html_string)
+            index_file.write(report_string)
 
         #Cache it in shock as an archive
         upload_info = self.dfu.file_to_shock({'file_path': report_file_path,
