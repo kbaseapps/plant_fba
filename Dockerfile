@@ -12,7 +12,9 @@ RUN conda install -c conda-forge phantomjs
 
 RUN pip install --upgrade pip && \
     pip install bokeh && \
-    pip install selenium
+    pip install selenium && \
+    pip install pandas && \
+    pip install scipy
 
 # -----------------------------------------
 
