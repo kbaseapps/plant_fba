@@ -78,8 +78,8 @@ class plant_fba:
         # return variables are: output_report
         #BEGIN integrate_abundances_with_metabolism
 
-        app = IntegrateAppImpl(self.config, ctx)
-        output_report = app.integrate_abundances_with_metabolism(input_params)
+        app = IntegrateAppImpl(self.config, ctx, input_params)
+        output_report = app.integrate_abundances_with_metabolism()
 
         #END integrate_abundances_with_metabolism
 
