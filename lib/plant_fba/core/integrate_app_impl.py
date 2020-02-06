@@ -210,15 +210,25 @@ class IntegrateAppImpl:
         upload_info = self.dfu.file_to_shock({'file_path': file_path,
                                               'pack': 'zip'})
 
-        # HTML Link object
+        # HTML Link objects
+        # Index
         html_link = {'shock_id' : upload_info['shock_id'],
                      'name' : summary_html_file,
                      'label' : 'HTML report for integrate_abundances_with_metabolism app',
                      'description' : 'HTML report for integrate_abundances_with_metabolism app'}
-
-        html_report_list.append({'path': file_path,
-                                 'name': summary_html_file,
-                                 'description': 'HTML report for integrate_abundances_with_metabolism app'})
+        html_report_list.append(html_link)
+        # Figures
+        html_link = {'shock_id' : upload_info['shock_id'],
+                     'name' : figure_html_file,
+                     'label' : 'HTML report for integrate_abundances_with_metabolism app',
+                     'description' : 'HTML report for integrate_abundances_with_metabolism app'}
+        html_report_list.append(html_link)
+        # Table
+        html_link = {'shock_id' : upload_info['shock_id'],
+                     'name' : table_html_file,
+                     'label' : 'HTML report for integrate_abundances_with_metabolism app',
+                     'description' : 'HTML report for integrate_abundances_with_metabolism app'}
+        html_report_list.append(html_link)
 
         return html_report_list
     
