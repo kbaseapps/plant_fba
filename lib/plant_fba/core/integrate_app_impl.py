@@ -211,6 +211,7 @@ class IntegrateAppImpl:
                                               'pack': 'zip'})
 
         # HTML Link objects
+        html_link = dict()
         # Index
         # html_link = {'shock_id' : upload_info['shock_id'],
         #              'name' : summary_html_file,
