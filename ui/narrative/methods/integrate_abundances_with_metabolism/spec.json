@@ -40,7 +40,7 @@
             "field_type": "text",
             "text_options": {
 	    	"is_output_name" : true,
-                "valid_ws_types": [ "KBaseFeatureValues.ExpressionMatrix" ]
+                "valid_ws_types": [ "KBaseMatrices.ReactionMatrix" ]
             }
         }
     ],
