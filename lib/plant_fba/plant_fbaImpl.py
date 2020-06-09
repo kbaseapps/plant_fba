@@ -160,7 +160,7 @@ class plant_fba:
         genome_ref = input_params['input_ws']+'/'+input_params['input_genome']
         genome_obj = self.dfu.get_objects({'object_refs': [genome_ref]})['data'][0]
         for feature in genome_obj['data']['features']:
-            if(len(feature['functions'])>0):
+            if('functions' in feature and len(feature['functions'])>0):
                 for function_comment in feature['functions']:
 
                     #Split for comments and retrieve compartments

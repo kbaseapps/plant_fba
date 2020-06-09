@@ -67,7 +67,6 @@ class plant_fbaTest(unittest.TestCase):
     def getContext(self):
         return self.__class__.ctx
 
-    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def test_integrate_abundances_with_metabolism(self):
 
         ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
@@ -77,12 +76,12 @@ class plant_fbaTest(unittest.TestCase):
 
     def test_reconstruct_plant_metabolism(self):
         # Prepare test objects in workspace if needed using
-        # self.getWsClient().save_objects({'workspace': self.getWsName(),
-        #                                  'objects': []})
+        self.getWsClient().copy_object({'from':{'workspace':'Phytozome_Genomes','name':'Dsalina_v1.0'},
+                                        'to':{'workspace':'plant_fba_testing','name':'Dsalina_v1.0'}})
 
         ret = self.getImpl().reconstruct_plant_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
-                                                                              'input_genome': 'PlantSEED_Arabidopsis',
-                                                                              'output_fbamodel': 'PlantSEED_Arabidopsis_FBAModel'
+                                                                              'input_genome': 'Dsalina_v1.0',
+                                                                              'output_fbamodel': 'Dsalina_v1.0_FBAModel'
                                                                               })
 
         # Check returned data with
