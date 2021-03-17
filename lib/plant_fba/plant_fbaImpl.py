@@ -319,14 +319,17 @@ class plant_fba:
             if(template_rxn['type'] == 'conditional' and len(proteins_list)==0):
                 continue
 
-            #If the check passes, then, here, we instatiate the actual reaction that goes into the model
+            #If the check passes, then, here, we instantiate the actual reaction that goes into the model
             new_mdlrxn_id = template_rxn['id']+'0'
             new_mdlcpt_id = template_rxn_cpt+'0'
             base_rxn_id = template_rxn['id'].split('_')[0]
 
             new_mdlrxn_dict = copy.deepcopy(default_mdlrxn_dict)
             new_mdlrxn_dict['id'] = new_mdlrxn_id
-            new_mdlrxn_dict['name'] = rxn_name_dict[base_rxn_id]
+
+            if(base_rxn_id in rxn_name_dict):
+                new_mdlrxn_dict['name'] = rxn_name_dict[base_rxn_id]
+
             new_mdlrxn_dict['direction'] = template_rxn['direction']
             new_mdlrxn_dict['reaction_ref']='~/template/reactions/id/'+template_rxn['id']
             new_mdlrxn_dict['modelcompartment_ref']='~/modelcompartments/id/'+new_mdlcpt_id
