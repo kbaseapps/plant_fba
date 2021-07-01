@@ -10,7 +10,6 @@ from plant_fba.authclient import KBaseAuth as _KBaseAuth
 
 from installed_clients.WorkspaceClient import Workspace
 
-
 class plant_fbaTest(unittest.TestCase):
 
     @classmethod
@@ -68,21 +67,20 @@ class plant_fbaTest(unittest.TestCase):
         return self.__class__.ctx
 
     def test_integrate_abundances_with_metabolism(self):
-
         ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
                                                                                       'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
                                                                                       'input_expression_matrix': 'Ath_H13_matrix',
                                                                                       'output_reaction_matrix': 'Ath_H13_Reaction_Matrix'})
 
     def test_reconstruct_plant_metabolism(self):
-        # Prepare test objects in workspace if needed using
-        self.getWsClient().copy_object({'from':{'workspace':'Phytozome_Genomes','name':'Dsalina_v1.0'},
-                                        'to':{'workspace':'plant_fba_testing','name':'Dsalina_v1.0'}})
+        # Prepare test object in workspace        
+        test_genome = 'Olucimarinus_v2.0'
+        self.getWsClient().copy_object({'from':{'workspace':'PlantSEED_v3','name':test_genome},
+                                        'to':{'workspace':'plant_fba_testing','name':test_genome}})
 
         ret = self.getImpl().reconstruct_plant_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
-                                                                              'input_genome': 'Dsalina_v1.0',
-                                                                              'output_fbamodel': 'Dsalina_v1.0_FBAModel'
+                                                                              'input_genome': test_genome,
+                                                                              'output_fbamodel': test_genome+'_FBAModel'
                                                                               })
-
         # Check returned data with
         # self.assertEqual(ret[...], ...) or other unittest methods
