@@ -11,6 +11,7 @@ from installed_clients.KBaseReportClient import KBaseReport
 from installed_clients.DataFileUtilClient import DataFileUtil
 
 from plant_fba.core.integrate_app_impl import IntegrateAppImpl
+from plant_fba.core.generate_table_impl import GenerateTableImpl
 #END_HEADER
 
 
@@ -214,6 +215,9 @@ class plant_fba:
         #Lookup dictionaries for compartments and compounds, to avoid duplicating them
         mdlcpts_dict = dict()
         mdlcpds_dict = dict()
+        
+        #Reaction complexes for the generated table
+        rxncplxs_dict = dict()
 
         #Create New, but Empty Plant Reconstruction
         new_model_obj = { 'id' : input_params['output_fbamodel'], 'type' : "GenomeScale", 'source' : "KBase", 'source_id' : "PlantSEED_v2", 
@@ -228,6 +232,7 @@ class plant_fba:
             template_rxn_cpt = template_rxn['templatecompartment_ref'].split('/')[-1]
 
             proteins_list = list()
+            prots_str_list = list()
             #complex_ref and source are optional fields
             default_protein_dict = {'note':template_rxn['type'], 'complex_ref':'', 'modelReactionProteinSubunits':[]}
             for cpx_ref in template_rxn['templatecomplex_refs']:
@@ -312,7 +317,21 @@ class plant_fba:
                 if(len(subunits_list)>0):
                     new_protein_dict['modelReactionProteinSubunits']=subunits_list
 
+                    #Store features and subunits as complex string for table
+                    subs_str_list=list()
+                    for subunit in subunits_list:
+                        ftrs_str_list=list()
+                        for ftr_ref in subunit['feature_refs']:
+                            ftr = ftr_ref.split('/')[-1]
+                            ftrs_str_list.append(ftr)
+                        ftr_str = "("+",".join(ftrs_str_list)+")"
+                        subs_str_list.append(ftr_str)
+                    sub_str = "["+",".join(subs_str_list)+"]"
+                    prots_str_list.append(sub_str)
+
                 proteins_list.append(new_protein_dict)
+
+            prot_str = ",".join(prots_str_list)
 
             #This is important, we need to use role-based annotation to determine whether
             #a reaction should even be added to the model
@@ -323,6 +342,9 @@ class plant_fba:
             new_mdlrxn_id = template_rxn['id']+'0'
             new_mdlcpt_id = template_rxn_cpt+'0'
             base_rxn_id = template_rxn['id'].split('_')[0]
+
+            #For table
+            rxncplxs_dict[new_mdlrxn_id]=prot_str
 
             new_mdlrxn_dict = copy.deepcopy(default_mdlrxn_dict)
             new_mdlrxn_dict['id'] = new_mdlrxn_id
@@ -434,9 +456,38 @@ class plant_fba:
 
         #Compose report string
         html_string="<html><head><title>Reconstruct Plant Metabolism Report</title></head><body>"
-        html_string+="<p>The \"Reconstruct Plant Metabolism\" app has finished running:</br>"
-        html_string+="The app reconstructed the primary metabolism from the "
+        html_string+="<h2>Reconstruct Plant Metabolism Report</h2>"
+        html_string+="<p>The \"Reconstruct Plant Metabolism\" app has finished running, "
+        html_string+="reconstructing the primary metabolism from the "
         html_string+="enzymatic annotations in "+input_params['input_genome']+"</p>"
+        html_string+="<p>Below we present the table of reactions in the metabolic reconstruction, "
+        html_string+="it is similar to what you can see in the FBAModel viewer widget that appears "
+        html_string+="below the report but it has some additional information.</p>"
+        html_string+="<p><ul>"
+        html_string+="<li><b>Subsystems and Classes:</b> The table contains the metabolic subsystems and "
+        html_string+="the general class of metabolism they fall into.</li>"
+        html_string+="<li><b>Metabolic functions and EC numbers:</b> The table contains the original enzymatic "
+        html_string+="annotation ('Roles') and their EC numbers that were associated with each biochemical reaction.</li>"
+        html_string+="<li><b>Complexes:</b> The table contains the genes that were annotated with the metabolic functions. "
+        html_string+="These genes that are associated with each reaction can be seen in the FBAModel viewer widget, but here "
+        html_string+=" one can see how they may be organized into protein complexes. Each set of parentheses '()' "
+        html_string+="represents a single protein subunit (which may be the entire enzyme, or part of a large enzymatic "
+        html_string+="complex). Each set of square brackets '[]' represents an entire enzyme, regardless of how many "
+        html_string+="subunits it consists of. Each reaction may be catalyzed by different enzymes, each in turn composed "
+        html_string+="of different subunits. The complexes reflect how the enzymes were curated in <i>Arabidopsis thaliana</i> "
+        html_string+=" so if any complex is shown to be empty, this means that the enzymatic annotation was not propagated "
+        html_string+="from the original Arabidopsis gene."
+        html_string+="</ul></p>"
+
+        #GenerateTableImpl
+        table = GenerateTableImpl()
+        table_html_string = table.generate_table(rxncplxs_dict)
+
+        with open(os.path.join('/kb/module/data','app_report_templates','integrate_abundances_report_tables_template.html')) as report_template_file:
+            report_template_string = report_template_file.read()
+
+        # Insert html table
+        table_report_string = report_template_string.replace('*TABLES*', html_string+table_html_string)
 
         #Make folder for report files
         uuid_string = str(uuid.uuid4())
@@ -445,7 +496,7 @@ class plant_fba:
 
         #Write html files
         with open(os.path.join(report_file_path,"index.html"),'w') as index_file:
-            index_file.write(html_string)
+            index_file.write(table_report_string)
 
         #Cache it in shock as an archive
         upload_info = self.dfu.file_to_shock({'file_path': report_file_path,
