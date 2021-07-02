@@ -6,12 +6,18 @@ import sys
 import re
 import copy
 import uuid
+import json
+from urllib.request import urlopen
 
 from installed_clients.KBaseReportClient import KBaseReport
 from installed_clients.DataFileUtilClient import DataFileUtil
 
 from plant_fba.core.integrate_app_impl import IntegrateAppImpl
 from plant_fba.core.generate_table_impl import GenerateTableImpl
+
+MSD_url = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/'
+MSD_tag = 'v1.1.1'
+
 #END_HEADER
 
 
@@ -115,27 +121,17 @@ class plant_fba:
                 abbrev_cpt_dict[array[3]]=array[0]
                 cpt_name_dict[array[0]]=array[2]
 
-        rxn_name_dict=dict()
-        with open('/kb/module/data/reactions.txt') as fh:
-            for line in fh.readlines():
-                line=line.strip('\r\n')
-                array=line.split('\t')
-                if(array[1] == ""):
-                    array[1] = array[0]
-                rxn_name_dict[array[0]]=array[1]
+        MSD_reactions = json.load(urlopen(MSD_url+MSD_tag+'/Biochemistry/reactions.json'))
+        MSD_reactions_dict = dict()
+        for entry in MSD_reactions:
+            MSD_reactions_dict[entry['id']]=entry
 
-        cpd_props_dict=dict()
-        with open('/kb/module/data/compounds.txt') as fh:
-            for line in fh.readlines():
-                line=line.strip('\r\n')
-                array=line.split('\t')
-                if(array[2] == ''):
-                    array[2] = array[0]
-                cpd_props_dict[array[0]]={'name':array[2],
-                                          'formula':array[3],
-                                          'charge':array[4]}
+        MSD_compounds = json.load(urlopen(MSD_url+MSD_tag+'/Biochemistry/compounds.json'))
+        MSD_compounds_dict = dict()
+        for entry in MSD_compounds:
+            MSD_compounds_dict[entry['id']]=entry
 
-        #Retrieve Template, and compile indexes of roles and complexes
+        # Retrieve Template, and compile indexes of roles and complexes
         if('template_ws' not in input_params or input_params['template_ws'] == ''):
             input_params['template_ws'] = 'NewKBaseModelTemplates'
 
@@ -349,8 +345,9 @@ class plant_fba:
             new_mdlrxn_dict = copy.deepcopy(default_mdlrxn_dict)
             new_mdlrxn_dict['id'] = new_mdlrxn_id
 
-            if(base_rxn_id in rxn_name_dict):
-                new_mdlrxn_dict['name'] = rxn_name_dict[base_rxn_id]
+            new_mdlrxn_dict['name'] = MSD_reactions_dict[base_rxn_id]['abbreviation']
+            if(MSD_reactions_dict[base_rxn_id]['abbreviation'] == ""):
+                new_mdlrxn_dict['name']=base_rxn_id
 
             new_mdlrxn_dict['direction'] = template_rxn['direction']
             new_mdlrxn_dict['reaction_ref']='~/template/reactions/id/'+template_rxn['id']
@@ -388,9 +385,12 @@ class plant_fba:
                 if(new_mdlcpd_id not in mdlcpds_dict):
                     new_mdlcpd_dict = copy.deepcopy(default_mdlcpd_dict)
                     new_mdlcpd_dict['id']=new_mdlcpd_id
-                    new_mdlcpd_dict['name'] = cpd_props_dict[base_cpd_id]['name']
-                    new_mdlcpd_dict['charge'] = float(cpd_props_dict[base_cpd_id]['charge'])
-                    new_mdlcpd_dict['formula'] = cpd_props_dict[base_cpd_id]['formula']
+                    new_mdlcpd_dict['name'] = MSD_compounds_dict[base_cpd_id]['name']
+                    if(MSD_compounds_dict[base_cpd_id]['name'] == ""):
+                        new_mdlcpd_dict['name'] = ""
+
+                    new_mdlcpd_dict['charge'] = float(MSD_compounds_dict[base_cpd_id]['charge'])
+                    new_mdlcpd_dict['formula'] = MSD_compounds_dict[base_cpd_id]['formula']
                     new_mdlcpd_dict['compound_ref']='~/template/compounds/id/'+template_rgt_cpd
                     new_mdlcpd_dict['modelcompartment_ref']='~/modelcompartments/id/'+new_mdlcpt_id
                     mdlcpds_dict[new_mdlcpd_id]=new_mdlcpd_dict
@@ -460,9 +460,10 @@ class plant_fba:
         html_string+="<p>The \"Reconstruct Plant Metabolism\" app has finished running, "
         html_string+="reconstructing the primary metabolism from the "
         html_string+="enzymatic annotations in "+input_params['input_genome']+"</p>"
-        html_string+="<p>Below we present the table of reactions in the metabolic reconstruction, "
+        html_string+="<p>Below we present the table of compartmentalized reactions in the metabolic reconstruction, "
         html_string+="it is similar to what you can see in the FBAModel viewer widget that appears "
-        html_string+="below the report but it has some additional information.</p>"
+        html_string+="below the report, but it has some additional information. Each row in the table is unique "
+        html_string+="to each combination of reaction and compartment.</p>"
         html_string+="<p><ul>"
         html_string+="<li><b>Subsystems and Classes:</b> The table contains the metabolic subsystems and "
         html_string+="the general class of metabolism they fall into.</li>"
@@ -476,7 +477,9 @@ class plant_fba:
         html_string+="subunits it consists of. Each reaction may be catalyzed by different enzymes, each in turn composed "
         html_string+="of different subunits. The complexes reflect how the enzymes were curated in <i>Arabidopsis thaliana</i> "
         html_string+=" so if any complex is shown to be empty, this means that the enzymatic annotation was not propagated "
-        html_string+="from the original Arabidopsis gene."
+        html_string+="from the original Arabidopsis gene. The original Arabidopsis curation also included protein localization "
+        html_string+="so if a reaction has empty complexes in some compartments as opposed to others, this is an indication "
+        html_string+="that annotation was only propagated for some localized Arabidopsis enzymes, and not others."
         html_string+="</ul></p>"
 
         #GenerateTableImpl
