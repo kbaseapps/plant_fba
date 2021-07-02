@@ -17,6 +17,7 @@ from plant_fba.core.generate_table_impl import GenerateTableImpl
 
 MSD_url = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/'
 MSD_tag = 'v1.1.1'
+MSD_tag = "7063bbffde4b40c01550dcb48b89107f28caa2b1" #adding_nad_transporters
 
 #END_HEADER
 
