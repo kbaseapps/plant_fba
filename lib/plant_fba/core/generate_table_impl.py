@@ -88,7 +88,7 @@ class GenerateTableImpl:
         html_lines=list()        
         html_lines.append('<table class="table table-bordered table-striped">')
 
-        header_list = ["Reactions","Complexes","Roles","Compartments","EC numbers","Subsystems","Classes"]
+        header_list = ["Reaction","Compartment","Roles","Complexes","EC numbers","Subsystems","Classes"]
 
         html_lines.append('<thead>')            
         internal_header_line = "</td><td>".join(header_list)
@@ -97,20 +97,20 @@ class GenerateTableImpl:
 
         html_lines.append("<tbody>")
 
+        #######################################################################
+        # Each row in the table is unique to the reaction/compartment combination
         for reaction in sorted(reactions_data.keys()):
-
-            compartmentalized_complexes=list()
-
-            #######################################################################
-            # The code below is taken from the code for generating a ModelTemplate
-            # It identifies the single letter reaction id for transport reactions
-            # Accordingly, the compartments should all be sorted
-            # So a compartment index of 0 matches the first position in the compartment list
-            # The order is curated in the PlantSEED database
-
-            compartments = list()
             for compartment in reactions_data[reaction]['compartments']:
-                compartments.append(Template_Compartment_Mapping[compartment])
+                compartment_str = Template_Compartment_Mapping[compartment]
+
+                compartmentalized_complexes=list()
+
+                #######################################################################
+                # The code below is taken from the code for generating a ModelTemplate
+                # It identifies the single letter reaction id for transport reactions
+                # Accordingly, the compartments should all be sorted
+                # So a compartment index of 0 matches the first position in the compartment list
+                # The order is curated in the PlantSEED database
 
                 reaction_cpt_id = compartment
 
@@ -134,27 +134,26 @@ class GenerateTableImpl:
                     if('j' in compartment):
                         reaction_cpt_id = 'j'
 
+                #######################################################################
+
                 model_reaction_id = reaction+"_"+reaction_cpt_id+"0"
                 if(model_reaction_id in complexes and complexes[model_reaction_id] not in compartmentalized_complexes):
                     compartmentalized_complexes.append(complexes[model_reaction_id])
+            
+                complexes_str="; ".join(compartmentalized_complexes)
+                roles_str="; ".join(sorted(reactions_data[reaction]['roles']))
+                ecs_str="; ".join(sorted(reactions_data[reaction]['ecs']))
+                classes_str="; ".join(sorted(reactions_data[reaction]['classes']))
 
-            complexes_str="; ".join(compartmentalized_complexes)
-            compartments="; ".join(sorted(compartments))
+                subsystems_str ="; ".join(sorted(reactions_data[reaction]['subsystems']))
+                subsystems_str = subsystems_str.replace("_in_plants","")
+                subsystems_str = subsystems_str.replace("_"," ")
 
-            #######################################################################
-
-            roles="; ".join(sorted(reactions_data[reaction]['roles']))
-            ecs="; ".join(sorted(reactions_data[reaction]['ecs']))
-            classes="; ".join(sorted(reactions_data[reaction]['classes']))
-
-            subsystems="; ".join(sorted(reactions_data[reaction]['subsystems']))
-            subsystems = subsystems.replace("_in_plants","")
-            subsystems = subsystems.replace("_"," ")
-
-            html_lines.append("<tr>")
-            internal_row_line = "</td><td>".join([reaction,complexes_str,roles,compartments,ecs,subsystems,classes])
-            html_lines.append("<td>"+internal_row_line+"</td>")
-            html_lines.append("</tr>")
+                html_lines.append("<tr>")
+                internal_row_line = "</td><td>".join([reaction,compartment_str,roles_str,
+                                                      complexes_str,ecs_str,subsystems_str,classes_str])
+                html_lines.append("<td>"+internal_row_line+"</td>")
+                html_lines.append("</tr>")
 
         html_lines.append("</tbody>")
         html_lines.append("</table>")
