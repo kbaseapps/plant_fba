@@ -387,11 +387,14 @@ class plant_fba:
                     new_mdlcpd_dict = copy.deepcopy(default_mdlcpd_dict)
                     new_mdlcpd_dict['id']=new_mdlcpd_id
                     new_mdlcpd_dict['name'] = MSD_compounds_dict[base_cpd_id]['name']
-                    if(MSD_compounds_dict[base_cpd_id]['name'] == ""):
-                        new_mdlcpd_dict['name'] = ""
 
                     new_mdlcpd_dict['charge'] = float(MSD_compounds_dict[base_cpd_id]['charge'])
                     new_mdlcpd_dict['formula'] = MSD_compounds_dict[base_cpd_id]['formula']
+                    if(MSD_compounds_dict[base_cpd_id]['formula'] == "" or \
+                           MSD_compounds_dict[base_cpd_id]['formula'] is None):
+                        print("Formula: ",base_cpd_id,MSD_compounds_dict[base_cpd_id])
+                        new_mdlcpd_dict['formula'] = ""
+
                     new_mdlcpd_dict['compound_ref']='~/template/compounds/id/'+template_rgt_cpd
                     new_mdlcpd_dict['modelcompartment_ref']='~/modelcompartments/id/'+new_mdlcpt_id
                     mdlcpds_dict[new_mdlcpd_id]=new_mdlcpd_dict
