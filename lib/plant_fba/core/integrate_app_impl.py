@@ -3,12 +3,11 @@ import os
 import uuid
 import sys
 import re
+import json
 
 #For Bokeh figures
-from bokeh.io import output_file, save, export_png
-from bokeh.plotting import figure
+from bokeh.io import output_file, save
 from bokeh.layouts import grid
-from bokeh.models import Slope
 
 #For stats
 import pandas as pd
@@ -19,6 +18,9 @@ import numpy as np
 
 from installed_clients.DataFileUtilClient import DataFileUtil
 from installed_clients.KBaseReportClient import KBaseReport
+
+from plant_fba.core.fetch_plantseed_impl import FetchPlantSEEDImpl
+from plant_fba.core.generate_figure_impl import GenerateFigureImpl
 
 class IntegrateAppImpl:
     @staticmethod
@@ -47,12 +49,10 @@ class IntegrateAppImpl:
 
     def _build_table(self, table_dict, stats_df):
 
-        [rxns_subsystems,rxns_roles,rxns_ecs] = self._load_subsystems()
-
         html_lines=list()        
         html_lines.append('<table class="table table-bordered table-striped">')
 
-        header_list = ["Complex","Compartments","Reactions","EC numbers","Subsystems"]+self.conditions_ids+["Mahalanobis distance","p-value"]
+        header_list = ["Enzymes","Compartments","Reactions","EC numbers","Subsystems"]+self.conditions_ids+["Mahalanobis distance","p-value"]
 
         html_lines.append('<thead>')            
         internal_header_line = "</td><td>".join(header_list)
@@ -60,7 +60,9 @@ class IntegrateAppImpl:
         html_lines.append('</thead>')
 
         html_lines.append("<tbody>")
+        print_row = True
         for complex_row in sorted(table_dict.keys()):
+            print_row = True
             cpts = ", ".join(sorted(list(table_dict[complex_row])))
 
             ecs = []
@@ -73,31 +75,39 @@ class IntegrateAppImpl:
             pvalue="0.00"
             for cpt in table_dict[complex_row]:
                 for rxn in table_dict[complex_row][cpt]:
+                    
                     if(rxn not in reactions):
                         reactions.append(rxn)
 
                     if(len(conditions)==0):
                         conditions = table_dict[complex_row][cpt][rxn]
 
-                    if(rxn in rxns_subsystems):
-                        for ss in rxns_subsystems[rxn]:
+                    if(rxn in self.reactions_data):
+                        for ss in self.reactions_data[rxn]['subsystems']:
+                            ss=ss.replace("_"," ")
+                            ss=ss.replace(" in plants","")
                             if(ss not in subsystems):
                                 subsystems.append(ss)
 
-                    if(rxn in rxns_ecs):
-                        for ec in rxns_ecs[rxn]:
+                        for ec in self.reactions_data[rxn]['ecs']:
                             if(ec not in ecs):
                                 ecs.append(ec)
 
-                    str_md = "{0:.2f}".format(stats_df.loc[rxn+'_'+cpt]['mahalanobis'])
-                    str_pv = "{0:.2f}".format(stats_df.loc[rxn+'_'+cpt]['pvalue'])
-                    if(str_pv == "0.00"):
-                        str_pv = "{0:.2e}".format(stats_df.loc[rxn+'_'+cpt]['pvalue'])
-                    if(mahalanobis_dist != "0.00" and str_md != mahalanobis_dist):
-                        print("WARNING: CHANGING STATS FOR SAME PROTEIN COMPLEXES\n")
-                        print("===================================================\n\n")
-                        print(complex_row,cpts,rxn,conditions,stats_df.loc[rxn+'_'+cpt]['mahalanobis'],mahalanobis_dist,"\n")
-                        print("===================================================\n\n")
+                    str_md = "0.00"
+                    str_pv = "0.00"
+                    if(rxn+'_'+cpt not in stats_df.index):
+                        print("MISSING REACTION: ",complex_row,rxn+"_"+cpt)
+                        print_row = False
+                    else:
+                        str_md = "{0:.2f}".format(stats_df.loc[rxn+'_'+cpt]['mahalanobis'])
+                        str_pv = "{0:.2f}".format(stats_df.loc[rxn+'_'+cpt]['pvalue'])
+                        if(str_pv == "0.00"):
+                            str_pv = "{0:.2e}".format(stats_df.loc[rxn+'_'+cpt]['pvalue'])
+                        if(mahalanobis_dist != "0.00" and str_md != mahalanobis_dist):
+                            print("WARNING: CHANGING STATS FOR SAME PROTEIN COMPLEXES\n")
+                            print("===================================================\n\n")
+                            print(complex_row,cpts,rxn,conditions,stats_df.loc[rxn+'_'+cpt]['mahalanobis'],mahalanobis_dist,"\n")
+                            print("===================================================\n\n")
 
                     mahalanobis_dist=str_md
                     pvalue=str_pv
@@ -106,13 +116,17 @@ class IntegrateAppImpl:
             subsystems=", ".join(sorted(subsystems))
             ecs=", ".join(sorted(ecs))
 
+            conditions_strings = list()
             for i in range(len(conditions)):
-                conditions[i] = "{0:.2f}".format(conditions[i])
+                conditions[i][0] = "{0:.2f}".format(conditions[i][0])
+                conditions_strings.append(" | ".join(conditions[i]))
 
-            html_lines.append("<tr>")
-            internal_row_line = "</td><td>".join([complex_row,cpts,reactions,ecs,subsystems]+conditions+[mahalanobis_dist,pvalue])
-            html_lines.append("<td>"+internal_row_line+"</td>")
-            html_lines.append("</tr>")
+            # some complexes may have zero features predicted
+            if(print_row is True):
+                html_lines.append("<tr>")
+                internal_row_line = "</td><td>".join([complex_row,cpts,reactions,ecs,subsystems]+conditions_strings+[mahalanobis_dist,pvalue])
+                html_lines.append("<td>"+internal_row_line+"</td>")
+                html_lines.append("</tr>")
 
         html_lines.append("</tbody>")
         html_lines.append("</table>")
@@ -169,6 +183,10 @@ class IntegrateAppImpl:
         # Read in template html
         with open(os.path.join('/kb/module/data','app_report_templates','integrate_abundances_report_tables_template.html')) as report_template_file:
             report_template_string = report_template_file.read()
+
+        # Generate and Insert html title
+        title_string = "-".join([self.input_params['input_expression_matrix']]+self.conditions_ids)
+        report_template_string = report_template_string.replace('*TITLE*', title_string)
 
         # Insert html table
         table_report_string = report_template_string.replace('*TABLES*', table_html_string)
@@ -233,26 +251,6 @@ class IntegrateAppImpl:
 
         print("REPORT:",html_report_list)
         return html_report_list
-    
-    def _build_scatterplot(self,data,condition_1,condition_2,title="Default Title"):
-
-        od_fig = figure()
-        od_fig.xaxis.axis_label = self.conditions_ids[condition_1]
-        od_fig.yaxis.axis_label = self.conditions_ids[condition_2]
-        
-        df = pd.DataFrame(data,columns=self.conditions_ids)
-        od_fig.title.text = title
-        od_fig.circle(x=self.conditions_ids[condition_1], y=self.conditions_ids[condition_2], source=df, color="black")
-
-        slope_line = Slope(gradient=1, y_intercept=0, line_color="red")
-        od_fig.add_layout(slope_line)
-
-        return od_fig
-
-    def _add_to_scatterplot(self,figure,data,condition_1,condition_2,color="black"):
-
-        df = pd.DataFrame(data,columns=self.conditions_ids)
-        figure.circle(x=self.conditions_ids[condition_1], y=self.conditions_ids[condition_2], source=df, fill_color=color, line_color="black", size=6)
         
     def _load_fbamodel(self, model_ref):
         
@@ -313,30 +311,37 @@ class IntegrateAppImpl:
 
     def _compile_model_scores_percentiles(self, data):
 
-        #I want to compute percentile rank for each feature under each condition
-        #The Conditions_Score_Dicts variable is used to "bin" identical scores
-        #(to two decimal points, can be changed)
-        #For computing percentile rank
-        
-        model_conditions_score_dicts=dict()
+        # I want to compute percentile rank for each feature under each condition
+        # The Conditions_Score_Dicts variable is used to "bin" identical scores
+        # (to two decimal points, can be changed)
+
+        # First, we iterate through the conditions for computing percentile rank
+        # for each condition
         model_conditions_score_lists=dict()
+        model_conditions_score_pct_dicts=dict()
         for condition_index in range(len(self.conditions_ids)):
         
+            # For each condition, we "bin" the scores
+
             score_reaction_dict=dict()
             score_reaction_list=list()
-            n_ftrs=0 #This is accumulated independently because we skip scores of zero (as this affects how percentile rank distributes)
+            # The counting of features is done independently because we skip scores of zero
+            # (which this affect how percentile rank distributes)
+            n_ftrs=0 
             for reaction_index in range(len(data)):
             
-                #Retrieve value from 2D matrix
+                # Retrieve value from 2D matrix
                 score = data[reaction_index][condition_index]
 
-                #Many reactions are not assigned a score, and instead a default tiny score
+                # Many reactions are not assigned a score, and instead have a default tiny score
                 if(score == float(-sys.maxsize-1)):
                     continue
             
-                #Force into string for easier comparison
+                # Force into string for easier comparison
                 str_score = "{0:.2f}".format(score)
 
+                # I skip the relatively large number of reactions that have a value of zero
+                # to prevent the computation of the percentile rank skewing towards zero
                 if(str_score == "0.00"):
                     continue
         
@@ -348,10 +353,12 @@ class IntegrateAppImpl:
     
             condition = self.conditions_ids[condition_index]
             model_conditions_score_lists[condition]=score_reaction_list
-            if(condition not in model_conditions_score_dicts):
-                model_conditions_score_dicts[condition]=dict()
 
-            #Start calculating percentile rank
+            # Then for each condition, we use the binned scores to compute
+            # percentile rank
+            if(condition not in model_conditions_score_pct_dicts):
+                model_conditions_score_pct_dicts[condition]=dict()
+
             sorted_scores = sorted(score_reaction_dict.keys(),key=float)
             less_than_score_ftrs_count=0
             for score_index in range(len(sorted_scores)):
@@ -362,11 +369,19 @@ class IntegrateAppImpl:
                 percentile_rank = cumulative_n_score_ftrs / float(n_ftrs)
 
                 less_than_score_ftrs_count += len(score_reaction_dict[sorted_scores[score_index]])
-                model_conditions_score_dicts[condition][sorted_scores[score_index]]=percentile_rank
+                model_conditions_score_pct_dicts[condition][sorted_scores[score_index]]=percentile_rank
 
-        reaction_score_comparison_dict=dict()
+        # This next part of the code is to re-iterate through the data and to compose the dicts
+        # that become ColumnDataStores, and also with default values
+
+        # The reaction_percentile_comparison_dict is for the reaction percentile plot
         reaction_percentile_comparison_dict=dict()
-        reactions_rows=list()
+        if('All' not in reaction_percentile_comparison_dict):
+            reaction_percentile_comparison_dict['All']=dict()
+
+        # The reaction_score_comparison_dict works for the genome features plot
+        reaction_score_comparison_dict=dict()
+
         for reaction_index in range(len(data)):
             
             scores_dict=dict()
@@ -389,15 +404,13 @@ class IntegrateAppImpl:
             for condition in scores_dict:
 
                 # Collect reaction scores
-                    
                 if(condition not in reaction_score_comparison_dict):
                     reaction_score_comparison_dict[condition]=list()
                 reaction_score_comparison_dict[condition].append(scores_dict[condition])
 
                 # Collect reaction percentiles
-                
-                if(condition not in reaction_percentile_comparison_dict):
-                    reaction_percentile_comparison_dict[condition]=list()
+                if(condition not in reaction_percentile_comparison_dict['All']):
+                    reaction_percentile_comparison_dict['All'][condition]=list()
 
                 #Force into string for easier comparison
                 str_score = "{0:.2f}".format(scores_dict[condition])
@@ -406,95 +419,92 @@ class IntegrateAppImpl:
                 #So we have to check for them here
                 condition_pct = 0.00
                 if(str_score != '0.00'):
-                    condition_pct = model_conditions_score_dicts[condition][str_score]
-                reaction_percentile_comparison_dict[condition].append(condition_pct)
+                    condition_pct = model_conditions_score_pct_dicts[condition][str_score]
+                reaction_percentile_comparison_dict['All'][condition].append(condition_pct)
+
+                if('reactions' not in reaction_percentile_comparison_dict['All']):
+                    reaction_percentile_comparison_dict['All']['reactions']=list()
+                if(self.reactions_ids[reaction_index] not in \
+                       reaction_percentile_comparison_dict['All']['reactions']):
+                    reaction_percentile_comparison_dict['All']['reactions'].append(self.reactions_ids[reaction_index])
     
-            reactions_rows.append(self.reactions_ids[reaction_index])
+                base_rxn = self.reactions_ids[reaction_index].split('_')[0]
+                for ss in self.reactions_data[base_rxn]['subsystems']:
+                    if(ss not in reaction_percentile_comparison_dict):
+                        reaction_percentile_comparison_dict[ss]=dict()
+                    if(condition not in reaction_percentile_comparison_dict[ss]):
+                        reaction_percentile_comparison_dict[ss][condition]=list()
+                    reaction_percentile_comparison_dict[ss][condition].append(condition_pct)
 
-        reaction_score_comparison_df = pd.DataFrame(reaction_score_comparison_dict,columns=self.conditions_ids,index=reactions_rows)
-        reaction_percentile_comparison_df = pd.DataFrame(reaction_percentile_comparison_dict,columns=self.conditions_ids,index=reactions_rows)
+                    if('reactions' not in reaction_percentile_comparison_dict[ss]):
+                        reaction_percentile_comparison_dict[ss]['reactions']=list()
+                    if(self.reactions_ids[reaction_index] not in \
+                           reaction_percentile_comparison_dict[ss]['reactions']):
+                        reaction_percentile_comparison_dict[ss]['reactions'].append(self.reactions_ids[reaction_index])
 
-        return [reaction_score_comparison_df, reaction_percentile_comparison_df]
+            self.mh_reactions_ids.append(self.reactions_ids[reaction_index])
+
+        # We set the default values here at the end of the loop because we don't know 
+        # how many reactions there will be for each category
+        for category in reaction_percentile_comparison_dict:
+            for key in ['color','size','tooltip','fill_alpha']:
+                reaction_percentile_comparison_dict[category][key]=list()
+
+            for index in range(len(reaction_percentile_comparison_dict[category][self.conditions_ids[0]])):
+
+                reaction_percentile_comparison_dict[category]['fill_alpha'].append(1.0)
+                
+                # format string of subsystems for tooltip
+                rxn = reaction_percentile_comparison_dict[category]['reactions'][index]
+                base_rxn = rxn.split('_')[0]
+                ss_string = ", ".join(self.reactions_data[base_rxn]['subsystems'])
+                reaction_percentile_comparison_dict[category]['tooltip'].append(rxn+", "+ss_string)
+
+                if(category == 'All'):
+
+                    reaction_percentile_comparison_dict[category]['color'].append('black')
+                    reaction_percentile_comparison_dict[category]['size'].append(6)
+
+                else:
+
+                    reaction_percentile_comparison_dict[category]['color'].append('red')
+                    reaction_percentile_comparison_dict[category]['size'].append(8)
+                    
+        return [reaction_score_comparison_dict, reaction_percentile_comparison_dict]
 
     def _compile_mahalanobis_dist_pvalue(self, data, threshold):
+
+        data_df = pd.DataFrame(data,columns=self.conditions_ids,index=self.mh_reactions_ids)
 
         # I don't know the math well enough to follow what's going on, but I used 
         # the recipe described here:
         # https://www.machinelearningplus.com/statistics/mahalanobis-distance/
 
         # Covariance matrix via numpy
-        cov_mat = np.cov(data.values.T)
+        cov_mat = np.cov(data_df.values.T)
 
         # Inverse covariance matrix via scipy.linalg
         inv_cov_mat = sp.linalg.inv(cov_mat)
         
         # two terms required, second using dot product
-        data_minus_mean = data - np.mean(data)
+        data_minus_mean = data_df - np.mean(data_df)
         left_term = np.dot(data_minus_mean,inv_cov_mat)
 
         # dot product
         mahalanobis = np.dot(left_term, data_minus_mean.T)
-        data['mahalanobis'] = mahalanobis.diagonal()
+        data_df['mahalanobis'] = mahalanobis.diagonal()
 
         # chi-squared p-values with one degree of freedom (two sets of variables)
-        data['pvalue'] = 1-sp.stats.chi2.cdf(data['mahalanobis'], 1)
+        data_df['pvalue'] = 1-sp.stats.chi2.cdf(data_df['mahalanobis'], 1)
 
         # find the outliers below a given threshold, i.e. p < 0.01
-        outliers=data.loc[data.pvalue < threshold]
+        outliers=data_df.loc[data_df.pvalue < threshold]
         # this is used when you want to just plot the p-values alone
-        data.index.name = 'reactions'
+        data_df.index.name = 'reactions'
         outliers.index.name = 'reactions'
 
         #Need to return the mapping between reactions and the p-values
-        return [data, outliers]
-        
-    def _load_subsystems(self):
-
-        # Collect Core Subsystems and Reactions (From PlantSEED Reference Genome)
-        Core_SS_Classes=('Central Carbon','Amino acids','Nucleic acids')
-        Reactions_Subsystems=dict()
-        Reactions_Roles=dict()
-
-        genome_ref = 'PlantSEED_v2/PlantSEED_Arabidopsis'
-        genome_obj = self.dfu.get_objects({'object_refs': [genome_ref]})['data'][0]
-        for ftr in genome_obj['data']['features']:
-            if(len(ftr['functional_descriptions'])>0):
-                for fd in ftr['functional_descriptions']:
-                    (mclass,subsystem,reaction_str)=fd.split('::')
-                    subsystem=subsystem.replace(" in plants","")
-                    # if(mclass not in Core_SS_Classes):
-                    #    continue
-                    for rxn in reaction_str.split('|'):
-                        if(rxn not in Reactions_Subsystems):
-                            Reactions_Subsystems[rxn]=dict()
-                        Reactions_Subsystems[rxn][subsystem]=1
-
-                        if(rxn not in Reactions_Roles):
-                            Reactions_Roles[rxn]=dict()
-
-                        #Split out comments
-                        Function_Comments = ftr['functions'][0].split("#")
-                        for i in range(len(Function_Comments)):
-                            Function_Comments[i]=Function_Comments[i].strip()
-
-                        Function = Function_Comments.pop(0)
-                        roles = re.split("\s*;\s+|\s+[\@\/]\s+", Function)
-                        for role in roles:
-                            Reactions_Roles[rxn][role]=1
-
-        Reactions_ECs=dict()
-        for rxn in Reactions_Roles:
-            roles = list(Reactions_Roles[rxn].keys())
-            for role in roles:
-                if('EC' in role):
-                    match = re.search(r"\d+\.[\d-]+\.[\d-]+\.[\d-]+", role)
-                    if(match is not None):
-                        if(rxn not in Reactions_ECs):
-                            Reactions_ECs[rxn]=dict()
-                        Reactions_ECs[rxn][match.group(0)]=1
-
-        print("Collected "+str(len(Reactions_Subsystems))+" core reactions")
-        return [Reactions_Subsystems,Reactions_Roles,Reactions_ECs]
+        return [data_df, outliers]
 
     def _integrate_abundances(self, model_obj, feature_lookup_dict, expdata_obj):
 
@@ -519,21 +529,21 @@ class IntegrateAppImpl:
                     minmax_expscore_dict[self.conditions_ids[experiment]]={'max':-sys.maxsize-1,'min':sys.maxsize}
 
                 # Maximal gene expression for a reaction
-                reaction_score='nan'
-                prt_list=list()
+                reaction_score=['nan',""]
+                prots_str_list=list()
                 for prt in mdlrxn_obj['modelReactionProteins']:
 
                     # Minimal gene expression for a complex
-                    complex_score='nan'
-                    prt_sbnt_list=list()
+                    complex_score=['nan',""]
+                    subs_str_list=list()
                     for sbnt in prt['modelReactionProteinSubunits']:
 
                         # Maximal gene expression for a subunit
-                        subunit_score='nan'
-                        sbnt_ftr_list=list()
+                        subunit_score=['nan',""]
+                        ftrs_str_list=list()
                         for feature in sbnt['feature_refs']:
                             feature=feature.split('/')[-1]
-                            sbnt_ftr_list.append(feature)
+                            ftrs_str_list.append(feature)
 
                             ftr_score = expdata_obj['data']['data']['values'][feature_lookup_dict[feature]][experiment]
 
@@ -547,50 +557,52 @@ class IntegrateAppImpl:
                                 minmax_expscore_dict[self.conditions_ids[experiment]]['max'] = ftr_score
 
                             # Maximal gene expression for a subunit
-                            if(subunit_score == 'nan' or subunit_score < ftr_score):
-                                subunit_score = ftr_score
+                            if(subunit_score[0] == 'nan' or subunit_score[0] < ftr_score):
+                                subunit_score = [ftr_score, feature]
                         
                         if(print_data is True):
-                            fh2.write(str(subunit_score)+'\n')
+                            fh2.write(subunit_score,'\n')
 
-                        if(len(sbnt_ftr_list)>0):
-                            prt_sbnt_list.append(', '.join(sbnt_ftr_list))
+                        ftr_str = "("+", ".join(ftrs_str_list)+")"
+                        subs_str_list.append(ftr_str)
 
                         # Minimal gene expression for a complex
-                        if(subunit_score != 'nan'):
-                            if(complex_score == 'nan' or complex_score > subunit_score):
-                                complex_score = subunit_score
+                        if(subunit_score[0] != 'nan'):
+                            if(complex_score[0] == 'nan' or complex_score[0] > subunit_score[0]):
+                                complex_score[0] = subunit_score[0]
+                                complex_score[1] = subunit_score[1]
 
                     if(print_data is True):
-                        fh2.write(str(complex_score)+'\n')
+                        fh2.write(complex_score,'\n')
 
-                    if(len(prt_sbnt_list)>0):
-                        prt_list.append('; '.join(prt_sbnt_list))
+                    sub_str = "["+", ".join(subs_str_list)+"]"
+                    prots_str_list.append(sub_str)
 
                     # Maximal gene expression for a reaction
-                    if(complex_score != 'nan'):
-                        if(reaction_score == 'nan' or reaction_score < complex_score):
-                            reaction_score = complex_score
+                    if(complex_score[0] != 'nan'):
+                        if(reaction_score[0] == 'nan' or reaction_score[0] < complex_score[0]):
+                            reaction_score[0] = complex_score[0]
+                            reaction_score[1] = complex_score[1]
             
-                if(reaction_score == 'nan'):
-                    reaction_score = float(-sys.maxsize-1)
+                if(reaction_score[0] == 'nan'):
+                    reaction_score[0] = float(-sys.maxsize-1)
 
                 if(print_data is True):
-                    fh2.write(self.conditions_ids[experiment]+':'+str(reaction_score)+'\n')
+                    fh2.write(self.conditions_ids[experiment]+':'+str(reaction_score[0])+'('+reaction_score[1]+')\n')
 
                 #Putting together dict for table
-                if(len(prt_list)>0):
-                    proteins_string=' | '.join(prt_list)
+                proteins_string=', '.join(prots_str_list)
+                if(len(prots_str_list)>0 and proteins_string != "[]" and proteins_string != "[()]"):
                     if(proteins_string not in model_complexes_dict):
                         model_complexes_dict[proteins_string]=dict()
                     if(cpt_id not in model_complexes_dict[proteins_string]):
                         model_complexes_dict[proteins_string][cpt_id]=dict()
                     if(base_rxn not in model_complexes_dict[proteins_string][cpt_id]):
                         model_complexes_dict[proteins_string][cpt_id][base_rxn]=list()
-                    fh.write('\t'.join([self.conditions_ids[experiment],proteins_string,cpt_id,base_rxn,str(reaction_score),'\n']))
+                    fh.write('\t'.join([self.conditions_ids[experiment],proteins_string,cpt_id,base_rxn,str(reaction_score[0]),reaction_score[1],'\n']))
                     model_complexes_dict[proteins_string][cpt_id][base_rxn].append(reaction_score)
 
-                rxndata_row.append(reaction_score)
+                rxndata_row.append(reaction_score[0])
 
             print_data=False
 
@@ -612,9 +624,15 @@ class IntegrateAppImpl:
         
         # set in _load_expression_matrix()
         self.conditions_ids = list()
+
         # set in _integrate_abundances()
         self.reactions_ids = list()
 
+        # set in _compile_model_scores_percentiles
+        self.mh_reactions_ids = list()
+
+        plantseed = FetchPlantSEEDImpl()
+        self.reactions_data = plantseed.fetch_reactions()
 
     def integrate_abundances_with_metabolism(self):
 
@@ -632,15 +650,11 @@ class IntegrateAppImpl:
         expression_ref = self.input_params['input_ws']+'/'+self.input_params['input_expression_matrix']
         [expdata_obj,features_ids,feature_index] = self._load_expression_matrix(expression_ref)
 
-        # Matrix of figures to be saved under one `grid` command
-        figure_matrix= list()
-
         ##############################################################
         # Extract expression abundances for use in first scatter plot
         ##############################################################
         feature_comparison_dict = self._compile_genome_scores(expdata_obj['data']['data']['values'])
  
-
         ####################################################################
         # Actually integrate abundances and build new ReactionMatrix object
         ####################################################################
@@ -653,52 +667,32 @@ class IntegrateAppImpl:
         ##########################################################################################
         # Extract / organize reaction expression scores for use in first and second scatter plot
         ##########################################################################################
-        [reaction_score_comparison_df, reaction_percentile_comparison_df] = self._compile_model_scores_percentiles(reaction_values_matrix)
+        [reaction_scores_dict, reaction_percentiles_dict] = self._compile_model_scores_percentiles(reaction_values_matrix)
 
         #############################################################################################################
         # Multi-variate mahalanobis distances computed along with outliers depending on chi-squared p-value of 0.01
         #############################################################################################################
-        [mahal_dist_df,outliers] = self._compile_mahalanobis_dist_pvalue(reaction_percentile_comparison_df,0.01)
+        [mahal_dist_df,outliers] = self._compile_mahalanobis_dist_pvalue(reaction_percentiles_dict['All'],0.01)
 
         ##############################################################
-        # Iterate through every unique pair of experiments/columns
+        # Figure generator
         ##############################################################
-        for first_condition_index in range(len(self.conditions_ids)):
-            for second_condition_index in range(len(self.conditions_ids)):
-                if(first_condition_index <= second_condition_index):
-                    continue
-  
-                # Row of figures: at this point, its just two, each with two datasets
-                figure_array = list()
+        subsystem_select_list=["None"]
+        for category in sorted(list(reaction_percentiles_dict.keys())):
+            if(category == 'All'):
+                continue
+            subsystem_select_list.append(category)
 
-                # Raw transcript abundance for genome in first figure of array
-                feature_figure = self._build_scatterplot(feature_comparison_dict,
-                                                         first_condition_index, second_condition_index,
-                                                         title="Genome Features Expression Abundances")
+            for rxn_idx in range(len(reaction_percentiles_dict[category]['reactions'])):
+                rxn = reaction_percentiles_dict[category]['reactions'][rxn_idx]
+                pval = mahal_dist_df.loc[rxn]['pvalue']
+                # reaction_percentiles_dict[category]['fill_alpha'][rxn_idx] = 1-pval
 
-                # Raw reaction expression scores mapped over genome abundances in first figure
-                self._add_to_scatterplot(feature_figure, reaction_score_comparison_df, 
-                                         first_condition_index, second_condition_index,
-                                         color="lightgreen")
-
-                # Add first figure of row
-                figure_array.append(feature_figure)
-
-                # Second scatterplot built for normalized expression scores
-                reaction_figure = self._build_scatterplot(reaction_percentile_comparison_df,
-                                                          first_condition_index, second_condition_index,
-                                                          title="Model Reactions Percentile Rank (p<0.01)")
-
-                # Add outliers (data matches, but its a different color)
-                self._add_to_scatterplot(reaction_figure, outliers, 
-                                         first_condition_index, second_condition_index,
-                                         color="red")
-
-                # Add second figure of row
-                figure_array.append(reaction_figure)
-
-                # Add row to matrix of figures
-                figure_matrix.append(figure_array)
+        figure_generator = GenerateFigureImpl()
+        figure_grid = figure_generator.generate_figure(self.conditions_ids, category_select=subsystem_select_list,
+                                                       genome_features=feature_comparison_dict,
+                                                       reaction_scores=reaction_scores_dict,
+                                                       reaction_percentiles=reaction_percentiles_dict)
 
         ##############################################################
         # Finishing and Saving ReactionMatrix
@@ -714,11 +708,6 @@ class IntegrateAppImpl:
         saved_matrix_ref = "{}/{}/{}".format(saved_matrix_dict[6],saved_matrix_dict[0],saved_matrix_dict[4])
         saved_matrix_desc = "Reaction matrix: "+self.input_params['output_reaction_matrix']
 
-        ###############################################################
-        # Compiling the list of complexes for use in the report table
-        ###############################################################
-        # complexes_dict = self._compile_model_complexes(model_obj)
-
         #####################################################################
         # Building the report with figures, tables, and saved_objects (to be improved)
         # We pass in a dict where each key is a row for the table
@@ -727,4 +716,6 @@ class IntegrateAppImpl:
         output_object_files = list()
         output_object_files.append({'ref':saved_matrix_ref,'description':saved_matrix_desc})
 
-        return self._build_report(figure_matrix, model_complexes_dict, mahal_dist_df, output_object_files, self.input_params['input_ws'])
+        return self._build_report(figure_grid, model_complexes_dict, 
+                                  mahal_dist_df, output_object_files, 
+                                  self.input_params['input_ws'])
