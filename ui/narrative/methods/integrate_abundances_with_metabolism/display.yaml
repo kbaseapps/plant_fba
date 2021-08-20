@@ -38,6 +38,13 @@ parameters :
             Reconstruction of plant metabolism
         long-hint  : |
             The metabolic reconstruction with which to integrate the gene abundances
+    expression_conditions :
+        ui-name : |
+            Expression Conditions
+        short-hint : |
+            Columns in Expression Matrix to integrate
+        long-hint  : |
+            The user can (optionally) pick which expression conditions to integrate
     reaction_matrix :
         ui-name : |
             Reaction Matrix

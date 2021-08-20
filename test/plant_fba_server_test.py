@@ -72,9 +72,11 @@ class plant_fbaTest(unittest.TestCase):
                                                                   {'input_ws': 'plant_fba_testing',
                                                                    'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
                                                                    'input_expression_matrix': 'Ath_H13_matrix',
+                                                                   'input_columns' : ["H13_control_Athaliana_Trimm_paired",
+                                                                                      "H13_DC3000_Athaliana_Trimm_paired"],
                                                                    'output_reaction_matrix': 'Ath_H13_Reaction_Matrix'})
 
-    def test_reconstruct_plant_metabolism(self):
+    def reconstruct_plant_metabolism(self):
         # Prepare test object in workspace        
         test_genome = 'Olucimarinus_v2.0'
         self.getWsClient().copy_object({'from':{'workspace':'PlantSEED_v3','name':test_genome},

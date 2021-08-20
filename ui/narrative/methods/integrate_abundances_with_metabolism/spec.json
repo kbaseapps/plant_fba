@@ -32,6 +32,35 @@
                 "valid_ws_types": [ "KBaseFBA.FBAModel" ]
             }
         },
+      	{
+	    "field_type" : "textsubdata",
+            "allow_multiple" : false,
+            "optional" : true,
+            "id" : "expression_conditions",
+            "default_values" : [
+                ""
+             ],
+             "advanced" : true,
+             "textsubdata_options" : {
+                 "allow_custom" : false,
+            	 "show_src_obj" : true,
+            	 "subdata_selection" : {
+                     "path_to_subdata" : [
+                         "data",
+                  	 "col_ids"
+               	     ],
+               	     "parameter_id" : "expseries_id",
+               	     "selection_id" : "id",
+               	     "subdata_included" : [
+                         "data/col_ids"
+               		 ]
+            	  },
+             "multiselection" : false
+             },
+             "text_options" : {
+                "valid_ws_types" : []
+             }
+        },
         {
             "id": "reaction_matrix",
             "optional": false,
@@ -59,6 +88,9 @@
                 },{
                     "input_parameter": "fba_model",
                     "target_property": "input_fbamodel"
+                },{
+                    "input_parameter": "expression_conditions",
+                    "target_property": "input_columns"
                 },{
                     "input_parameter": "reaction_matrix",
                     "target_property": "output_reaction_matrix"

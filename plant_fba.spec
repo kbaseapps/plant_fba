@@ -8,10 +8,14 @@ module plant_fba {
         string report_ref;
     } ReportResults;
     
+    /*
+    @optional input_columns
+    */
     typedef structure {
 	string input_ws;
 	string input_expression_matrix;
 	string input_fbamodel;
+	list<string> input_columns;
 	string output_reaction_matrix;
     } IntegrateAbundancesParams;
 

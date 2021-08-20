@@ -39,9 +39,9 @@ class plant_fba:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.1"
+    VERSION = "1.1.1"
     GIT_URL = "git@github.com:kbaseapps/plant_fba.git"
-    GIT_COMMIT_HASH = "0b8a7fdc6d1b98240c8e9aa1d8d81b492111d503"
+    GIT_COMMIT_HASH = "0ed04609fa441b7265254d6e7ff3837cf7e85fb6"
 
     #BEGIN_CLASS_HEADER
 
@@ -75,11 +75,13 @@ class plant_fba:
         #END_CONSTRUCTOR
         pass
 
+
     def integrate_abundances_with_metabolism(self, ctx, input_params):
         """
-        :param input_params: instance of type "IntegrateAbundancesParams" ->
-           structure: parameter "input_ws" of String, parameter
-           "input_expression_matrix" of String, parameter "input_fbamodel" of
+        :param input_params: instance of type "IntegrateAbundancesParams"
+           (@optional input_columns) -> structure: parameter "input_ws" of
+           String, parameter "input_expression_matrix" of String, parameter
+           "input_fbamodel" of String, parameter "input_columns" of list of
            String, parameter "output_reaction_matrix" of String
         :returns: instance of type "ReportResults" -> structure: parameter
            "report_name" of String, parameter "report_ref" of String
