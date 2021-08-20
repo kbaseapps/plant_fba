@@ -67,10 +67,12 @@ class plant_fbaTest(unittest.TestCase):
         return self.__class__.ctx
 
     def test_integrate_abundances_with_metabolism(self):
-        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), {'input_ws': 'plant_fba_testing',
-                                                                                      'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
-                                                                                      'input_expression_matrix': 'Ath_H13_matrix',
-                                                                                      'output_reaction_matrix': 'Ath_H13_Reaction_Matrix'})
+
+        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), 
+                                                                  {'input_ws': 'plant_fba_testing',
+                                                                   'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
+                                                                   'input_expression_matrix': 'Ath_H13_matrix',
+                                                                   'output_reaction_matrix': 'Ath_H13_Reaction_Matrix'})
 
     def test_reconstruct_plant_metabolism(self):
         # Prepare test object in workspace        
