@@ -4,65 +4,11 @@ import json
 import os
 import re
 
+from plant_fba.core.fetch_plantseed_impl import FetchPlantSEEDImpl
+
 PS_url = 'https://raw.githubusercontent.com/ModelSEED/PlantSEED/'
 PS_tag = 'v3.0.0'
   
-def _load_reactions():
-
-    reactions_data = dict()
-
-    # Load these directly from PlantSEED_Roles.json
-    PS_Roles = json.load(urlopen(PS_url+PS_tag+'/Data/PlantSEED_v3/PlantSEED_Roles.json'))
-
-    for entry in PS_Roles:
-        if(entry['include'] is False):
-#            print(entry['role'])
-            continue
-
-        main_class_ss = list()
-        main_class = list()
-        for metabolic_class in entry['classes']:
-            if(len(entry['classes'][metabolic_class].keys())>0):
-                main_class.append(metabolic_class)
-
-            for ss in entry['classes'][metabolic_class].keys():
-                if(ss not in main_class_ss):
-                    main_class_ss.append(ss)
-
-        for rxn in entry['reactions']:
-            if(rxn not in reactions_data):
-                reactions_data[rxn]={'ecs':[],
-                                     'roles':[],
-                                     'classes':[],
-                                     'subsystems':[],
-                                     'compartments':[]}
-
-            if(entry['role'] not in reactions_data[rxn]['roles']):
-                reactions_data[rxn]['roles'].append(entry['role'])
-
-            for mclass in main_class:
-                if(mclass not in reactions_data[rxn]['classes']):
-                    reactions_data[rxn]['classes'].append(mclass)
-
-            for subsystem in main_class_ss:
-                if(subsystem not in reactions_data[rxn]['subsystems']):
-                    reactions_data[rxn]['subsystems'].append(subsystem)
-
-            for cpt in entry['localization']:
-                if(cpt not in reactions_data[rxn]['compartments']):
-                    reactions_data[rxn]['compartments'].append(cpt)
-
-    for rxn in reactions_data:
-        for role in reactions_data[rxn]['roles']:
-            if('EC' in role):
-                match = re.search(r"\d+\.[\d-]+\.[\d-]+\.[\d-]+", role)
-                if(match is not None):
-                    if(match.group(0) not in reactions_data[rxn]['ecs']):
-                        reactions_data[rxn]['ecs'].append(match.group(0))
-
-    print("Collected "+str(len(reactions_data))+" core reactions")
-    return reactions_data
-
 # These should be retrieved from the Template data
 Template_Compartment_Mapping={'c':'cytosol', 'g':'golgi', 'w':'cellwall',
                               'n':'nucleus', 'r':'endoplasm',
@@ -82,13 +28,12 @@ class GenerateTableImpl:
     def __init__(self):
         pass
 
-    def generate_table(self, complexes=None):
-        reactions_data = _load_reactions()
+    def generate_table(self, reactions, complexes=None):
 
         html_lines=list()        
         html_lines.append('<table class="table table-bordered table-striped">')
 
-        header_list = ["Reaction","Compartment","Roles","Complexes","EC numbers","Subsystems","Classes"]
+        header_list = ["Reaction","Compartment","Roles","Enzymes","EC numbers","Subsystems","Classes"]
 
         html_lines.append('<thead>')            
         internal_header_line = "</td><td>".join(header_list)
@@ -99,8 +44,8 @@ class GenerateTableImpl:
 
         #######################################################################
         # Each row in the table is unique to the reaction/compartment combination
-        for reaction in sorted(reactions_data.keys()):
-            for compartment in reactions_data[reaction]['compartments']:
+        for reaction in sorted(reactions.keys()):
+            for compartment in reactions[reaction]['compartments']:
                 compartment_str = Template_Compartment_Mapping[compartment]
 
                 compartmentalized_complexes=list()
@@ -137,15 +82,17 @@ class GenerateTableImpl:
                 #######################################################################
 
                 model_reaction_id = reaction+"_"+reaction_cpt_id+"0"
-                if(model_reaction_id in complexes and complexes[model_reaction_id] not in compartmentalized_complexes):
+                if(complexes is not None and \
+                       model_reaction_id in complexes and \
+                       complexes[model_reaction_id] not in compartmentalized_complexes):
                     compartmentalized_complexes.append(complexes[model_reaction_id])
             
                 complexes_str="; ".join(compartmentalized_complexes)
-                roles_str="; ".join(sorted(reactions_data[reaction]['roles']))
-                ecs_str="; ".join(sorted(reactions_data[reaction]['ecs']))
-                classes_str="; ".join(sorted(reactions_data[reaction]['classes']))
+                roles_str="; ".join(sorted(reactions[reaction]['roles']))
+                ecs_str="; ".join(sorted(reactions[reaction]['ecs']))
+                classes_str="; ".join(sorted(reactions[reaction]['classes']))
 
-                subsystems_str ="; ".join(sorted(reactions_data[reaction]['subsystems']))
+                subsystems_str ="; ".join(sorted(reactions[reaction]['subsystems']))
                 subsystems_str = subsystems_str.replace("_in_plants","")
                 subsystems_str = subsystems_str.replace("_"," ")
 
@@ -161,17 +108,23 @@ class GenerateTableImpl:
         return "\n".join(html_lines)
 
 def main():
-    table = GenerateTableImpl()
-    table_html_string = table.generate_table()
 
-    with open(os.path.join('app_report_templates','annotation_report_tables_template.html')) as report_template_file:
+    plantseed = FetchPlantSEEDImpl()
+    reactions_data = plantseed.fetch_reactions()
+
+    table = GenerateTableImpl()
+    table_html_string = table.generate_table(reactions_data)
+
+    with open(os.path.join('../../../data','app_report_templates',
+                           'integrate_abundances_report_tables_template.html')) as report_template_file:
         report_template_string = report_template_file.read()
 
     # Insert html table
     table_report_string = report_template_string.replace('*TABLES*', table_html_string)
 
     table_html_file="annotation_table_output.html"
-    with open(os.path.join('app_report_templates',table_html_file),'w') as table_file:
+    with open(os.path.join('../../../data','app_report_templates',
+                           table_html_file),'w') as table_file:
         table_file.write(table_report_string)
 
     table.log(message="Table written to file: "+table_html_file)
