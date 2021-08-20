@@ -34,28 +34,21 @@
         },
       	{
 	    "field_type" : "textsubdata",
-            "allow_multiple" : false,
+            "allow_multiple" : true,
             "optional" : true,
             "id" : "expression_conditions",
-            "default_values" : [
-                ""
-             ],
-             "advanced" : true,
-             "textsubdata_options" : {
+            "default_values" : [ "" ],
+            "advanced" : true,
+            "textsubdata_options" : {
                  "allow_custom" : false,
             	 "show_src_obj" : true,
+                 "multiselection" : false,
             	 "subdata_selection" : {
-                     "path_to_subdata" : [
-                         "data",
-                  	 "col_ids"
-               	     ],
-               	     "parameter_id" : "expseries_id",
+                     "path_to_subdata" : [ "data", "col_ids" ],
+               	     "parameter_id" : "expression_matrix",
                	     "selection_id" : "id",
-               	     "subdata_included" : [
-                         "data/col_ids"
-               		 ]
-            	  },
-             "multiselection" : false
+               	     "subdata_included" : [ "data/col_ids" ]
+            	  }
              },
              "text_options" : {
                 "valid_ws_types" : []
