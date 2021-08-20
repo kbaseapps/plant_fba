@@ -14,10 +14,12 @@ from installed_clients.DataFileUtilClient import DataFileUtil
 
 from plant_fba.core.integrate_app_impl import IntegrateAppImpl
 from plant_fba.core.generate_table_impl import GenerateTableImpl
+from plant_fba.core.fetch_plantseed_impl import FetchPlantSEEDImpl
 
 MSD_url = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/'
 MSD_tag = 'v1.1.1'
 MSD_tag = "7063bbffde4b40c01550dcb48b89107f28caa2b1" #adding_nad_transporters
+MSD_tag = "kbase_release" # as of 08/19/21 this points to 7063bbff
 
 #END_HEADER
 
@@ -321,14 +323,14 @@ class plant_fba:
                         for ftr_ref in subunit['feature_refs']:
                             ftr = ftr_ref.split('/')[-1]
                             ftrs_str_list.append(ftr)
-                        ftr_str = "("+",".join(ftrs_str_list)+")"
+                        ftr_str = "("+", ".join(ftrs_str_list)+")"
                         subs_str_list.append(ftr_str)
-                    sub_str = "["+",".join(subs_str_list)+"]"
+                    sub_str = "["+", ".join(subs_str_list)+"]"
                     prots_str_list.append(sub_str)
 
                 proteins_list.append(new_protein_dict)
 
-            prot_str = ",".join(prots_str_list)
+            prot_str = ", ".join(prots_str_list)
 
             #This is important, we need to use role-based annotation to determine whether
             #a reaction should even be added to the model
@@ -487,11 +489,18 @@ class plant_fba:
         html_string+="</ul></p>"
 
         #GenerateTableImpl
+
+        plantseed = FetchPlantSEEDImpl()
+        reactions_data = plantseed.fetch_reactions()
+
         table = GenerateTableImpl()
-        table_html_string = table.generate_table(rxncplxs_dict)
+        table_html_string = table.generate_table(reactions_data, complexes=rxncplxs_dict)
 
         with open(os.path.join('/kb/module/data','app_report_templates','integrate_abundances_report_tables_template.html')) as report_template_file:
             report_template_string = report_template_file.read()
+
+        # Generate and insert html Title
+        report_template_string = report_template_string.replace('*TITLE*', input_params['output_fbamodel'])
 
         # Insert html table
         table_report_string = report_template_string.replace('*TABLES*', html_string+table_html_string)
