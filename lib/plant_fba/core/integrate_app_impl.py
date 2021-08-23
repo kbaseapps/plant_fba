@@ -270,17 +270,23 @@ class IntegrateAppImpl:
         for index in range(len(features_ids)):
             feature_lookup_dict[features_ids[index]]=index
 
+        condition_lookup_dict=dict()
+        for index in range(len(conditions_ids)):
+            condition_lookup_dict[conditions_ids[index]]=index
+
         if(len(self.conditions_ids) == 0):
             self.conditions_ids = conditions_ids
-        return [expdata_obj,features_ids,feature_lookup_dict]
+
+        return [expdata_obj,features_ids,feature_lookup_dict,condition_lookup_dict]
         
-    def _compile_genome_scores(self, data):
+    def _compile_genome_scores(self, data, conditions_indices):
 
         Feature_Comparison_Dict=dict()
         for feature_index in range(len(data)):
 
             scores_dict=dict()
-            for condition_index in range(len(self.conditions_ids)):
+            for condition in self.conditions_ids:
+                condition_index = conditions_indices[condition]
 
                 #Retrieve value from 2D matrix
                 score = data[feature_index][condition_index]
@@ -291,7 +297,6 @@ class IntegrateAppImpl:
                 if(str_score == "0.00"):
                     continue
 
-                condition = self.conditions_ids[condition_index]
                 scores_dict[condition]=score
 
             #Here we skip features where there aren't enough scores (should be same number of conditions)
@@ -658,12 +663,12 @@ class IntegrateAppImpl:
 
         # The columns / conditions_ids are set in this function if not set via user parameter
         expression_ref = self.input_params['input_ws']+'/'+self.input_params['input_expression_matrix']
-        [expdata_obj,features_ids,feature_index] = self._load_expression_matrix(expression_ref)
+        [expdata_obj,features_ids,feature_index,condition_index] = self._load_expression_matrix(expression_ref)
 
         ##############################################################
         # Extract expression abundances for use in first scatter plot
         ##############################################################
-        feature_comparison_dict = self._compile_genome_scores(expdata_obj['data']['data']['values'])
+        feature_comparison_dict = self._compile_genome_scores(expdata_obj['data']['data']['values'], condition_index)
  
         ####################################################################
         # Actually integrate abundances and build new ReactionMatrix object
