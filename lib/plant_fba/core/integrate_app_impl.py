@@ -142,10 +142,16 @@ class IntegrateAppImpl:
         report_file_path = os.path.join(self.scratch, self.report_uuid)
         os.mkdir(report_file_path)
 
-        figure_html_file = self._build_figure(report_file_path,figure_matrix)
         table_html_string = self._build_table(table_dict, stats_df)
 
-        output_html_files = self._generate_report_html(report_file_path,figure_html_file,table_html_string)
+        if(len(self.conditions_ids)>1):
+            figure_html_file = self._build_figure(report_file_path,figure_matrix)
+            output_html_files = self._generate_report_html(report_file_path,
+                                                           figure_html_file=figure_html_file,
+                                                           table_string=table_html_string)
+        else:
+            output_html_files = self._generate_report_html(report_file_path,
+                                                           table_string=table_html_string)
 
         report_params = { 'direct_html_link_index' : 0, #Use to refer to index of 'html_links'
                           'workspace_name' : workspace_name,
@@ -157,25 +163,11 @@ class IntegrateAppImpl:
 
         return {'report_name': output['name'], 'report_ref': output['ref']}
 
-    def _generate_report_html(self, file_path, figure_html_file, table_html_string):
+    def _generate_report_html(self, file_path, figure_html_file = None, table_string = None):
         """
             _generate_report: generates the HTML for the upload report
         """
         html_report_list = list()
-
-        ##############################################################
-        # Write figures html file (redundant)
-        ##############################################################
-        #with open(os.path.join('/kb/module/data','app_report_templates','integrate_abundances_report_figures_template.html')) as report_template_file:
-        #    report_template_string = report_template_file.read()
-
-        # embed html of figures
-        # figure_html_string="<iframe src=\""+figure_html_file+"\" width='auto' height='auto'</iframe>" #width=\"100%\" height=\"100%\"></iframe>"
-        # index_report_string = report_template_string.replace('*FIGURES*',figure_html_string)
-
-        #Write html file
-        #with open(os.path.join(file_path,"index.html"),'w') as index_file:
-        #    index_file.write(index_report_string)
 
         ##############################################################
         # Write table html file
@@ -189,7 +181,7 @@ class IntegrateAppImpl:
         report_template_string = report_template_string.replace('*TITLE*', title_string)
 
         # Insert html table
-        table_report_string = report_template_string.replace('*TABLES*', table_html_string)
+        table_report_string = report_template_string.replace('*TABLES*', table_string)
 
         # Write html file
         table_html_file="integrated_table_output.html"
@@ -202,13 +194,15 @@ class IntegrateAppImpl:
         # Begin composing html
         html_lines = list()
         html_lines.append('<h3 style="text-align: center">Integrate Abundances with Metabolism Report</h3>')
-        html_lines.append("<p>The \"Integrate Abundances with Metabolism\" app has finished running:</br>")
-        html_lines.append("The app integrated the gene abundances from the "+self.input_params['input_expression_matrix']+" ExpressionMatrix with the ")
-        html_lines.append(self.input_params['input_fbamodel']+" FBAModel, resulting in the "+self.input_params['output_reaction_matrix']+" ReactionMatrix.</p><br/>")
+        html_lines.append("<p>The \"Integrate Abundances with Metabolism\" app has finished running.</br>")
+        html_lines.append("The app integrated the values from the <b>"+self.input_params['input_expression_matrix']+"</b> ExpressionMatrix")
+        html_lines.append(" with the <b>"+self.input_params['input_fbamodel']+"</b> FBAModel</br>")
+        html_lines.append("Specifically, the app integrated the values from these chosen conditions in the ExpressionMatrix: <b>"+"</b>, <b>".join(self.conditions_ids)+"</b></br>")
+        html_lines.append("The results of the integration are stored in the <b>"+self.input_params['output_reaction_matrix']+"</b> ReactionMatrix.</p><br/>")
+        html_lines.append('The results of the integration can be visualized in this <a href="'+table_html_file+'" target="_blank">Table</a></br>')
 
-        html_lines.append('<p>The data within the output '+self.input_params['output_reaction_matrix']+' ReactionMatrix is also presented in two forms:</p>')
-        html_lines.append('<list><ul><a href="'+table_html_file+'" target="_blank">Table</a></ul></list>')
-        html_lines.append('<list><ul><a href="'+figure_html_file+'" target="_blank">Scatterplots</a></ul></list>')
+        if(len(self.conditions_ids)>1):
+            html_lines.append('The results of the integration can be also be visualized in these <a href="'+figure_html_file+'" target="_blank">Scatterplots</a>')
 
         # Read in template html
         with open(os.path.join('/kb/module/data','app_report_templates','integrate_abundances_report_template.html')) as report_template_file:
@@ -236,12 +230,15 @@ class IntegrateAppImpl:
         #              'label' : 'HTML report for integrate_abundances_with_metabolism app',
         #              'description' : 'HTML report for integrate_abundances_with_metabolism app'}
         # html_report_list.append(html_link)
-        # Figures
-        html_link = {'shock_id' : upload_info['shock_id'],
-                     'name' : figure_html_file,
-                     'label' : 'Scatterplot figures generated by Integrate Abundances with Metabolism app',
-                     'description' : 'Scatterplot figures generated by Integrate Abundances with Metabolism app'}
-        html_report_list.append(html_link)
+
+        if(len(self.conditions_ids)>1):
+            # Figures
+            html_link = {'shock_id' : upload_info['shock_id'],
+                         'name' : figure_html_file,
+                         'label' : 'Scatterplot figures generated by Integrate Abundances with Metabolism app',
+                         'description' : 'Scatterplot figures generated by Integrate Abundances with Metabolism app'}
+            html_report_list.append(html_link)
+
         # Table
         html_link = {'shock_id' : upload_info['shock_id'],
                      'name' : table_html_file,
@@ -273,7 +270,8 @@ class IntegrateAppImpl:
         for index in range(len(features_ids)):
             feature_lookup_dict[features_ids[index]]=index
 
-        self.conditions_ids = conditions_ids
+        if(len(self.conditions_ids) == 0):
+            self.conditions_ids = conditions_ids
         return [expdata_obj,features_ids,feature_lookup_dict]
         
     def _compile_genome_scores(self, data):
@@ -484,8 +482,12 @@ class IntegrateAppImpl:
         cov_mat = np.cov(data_df.values.T)
 
         # Inverse covariance matrix via scipy.linalg
-        inv_cov_mat = sp.linalg.inv(cov_mat)
-        
+        # It won't accept a 1x1 matrix hence the if/else
+        if(len(self.conditions_ids)>1):
+            inv_cov_mat = sp.linalg.inv(cov_mat)
+        else:
+            inv_cov_mat = 1/cov_mat
+
         # two terms required, second using dot product
         data_minus_mean = data_df - np.mean(data_df)
         left_term = np.dot(data_minus_mean,inv_cov_mat)
@@ -624,6 +626,11 @@ class IntegrateAppImpl:
         
         # set in _load_expression_matrix()
         self.conditions_ids = list()
+        
+        # this is an optional parameter, but restricts the 
+        # number of chosen columns in the matrix
+        if('input_columns' in input_params and len(input_params['input_columns'])>0):
+            self.conditions_ids = input_params['input_columns']
 
         # set in _integrate_abundances()
         self.reactions_ids = list()
@@ -636,10 +643,12 @@ class IntegrateAppImpl:
 
     def integrate_abundances_with_metabolism(self):
 
-        self._validate_params(self.input_params, {'input_ws',
-                                                  'input_fbamodel',
-                                                  'input_expression_matrix',
-                                                  'output_reaction_matrix'}, {})
+        self._validate_params(self.input_params, 
+                              {'input_ws',
+                               'input_fbamodel',
+                               'input_expression_matrix',
+                               'output_reaction_matrix'}, 
+                              {'input_columns'})
 
         ##############################################################
         # Load model and expression objects
@@ -647,6 +656,7 @@ class IntegrateAppImpl:
         model_ref = self.input_params['input_ws']+'/'+self.input_params['input_fbamodel']
         [model_obj,reaction_index] = self._load_fbamodel(model_ref)
 
+        # The columns / conditions_ids are set in this function if not set via user parameter
         expression_ref = self.input_params['input_ws']+'/'+self.input_params['input_expression_matrix']
         [expdata_obj,features_ids,feature_index] = self._load_expression_matrix(expression_ref)
 
