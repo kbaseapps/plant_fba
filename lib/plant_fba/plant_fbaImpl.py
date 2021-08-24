@@ -90,6 +90,9 @@ class plant_fba:
         # return variables are: output_report
         #BEGIN integrate_abundances_with_metabolism
 
+        for param in input_params:
+            print("PARAM: ",param," : ",input_params[param])
+
         app = IntegrateAppImpl(self.config, ctx, input_params)
         output_report = app.integrate_abundances_with_metabolism()
 
