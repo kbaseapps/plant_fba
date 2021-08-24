@@ -73,6 +73,18 @@ class plant_fbaTest(unittest.TestCase):
         input_expression_matrix = 'Ath_H13_matrix'
         output_reaction_matrix = 'Ath_H13_Reaction_Matrix'
 
+        # First test for without using predefined conditions
+
+        input_params = {'input_ws': input_ws,
+                        'input_fbamodel': input_fbamodel,
+                        'input_expression_matrix': input_expression_matrix,
+                        'output_reaction_matrix': output_reaction_matrix}
+
+        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), 
+                                                                  input_params)
+
+        # Second test for using user-selected conditions
+
         # Can't pass as a list until the multiselection bug in the UI is fixed
         input_columns = ["H13_control_Athaliana_Trimm_paired",
                          "H13_DC3000_Athaliana_Trimm_paired"]

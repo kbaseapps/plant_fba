@@ -631,10 +631,11 @@ class IntegrateAppImpl:
         # There is a bug in the UI that won't let me collect a
         # a clean list of conditions, so I have to parse them
         # from a comma-separated string
-        conditions = list()
-        for condition in input_params["input_columns"].split(','):
-            conditions.append(condition)
-        input_params["input_columns"]=conditions
+        if("input_columns" in input_params and input_params["input_columns"] != ""):
+            conditions = list()
+            for condition in input_params["input_columns"].split(','):
+                conditions.append(condition)
+            input_params["input_columns"]=conditions
 
         self.input_params = input_params
 
