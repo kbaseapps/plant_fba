@@ -68,15 +68,25 @@ class plant_fbaTest(unittest.TestCase):
 
     def test_integrate_abundances_with_metabolism(self):
 
-        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), 
-                                                                  {'input_ws': 'plant_fba_testing',
-                                                                   'input_fbamodel': 'PlantSEED_Arabidopsis_FBAModel',
-                                                                   'input_expression_matrix': 'Ath_H13_matrix',
-                                                                   'input_columns' : ["H13_control_Athaliana_Trimm_paired",
-                                                                                      "H13_DC3000_Athaliana_Trimm_paired"],
-                                                                   'output_reaction_matrix': 'Ath_H13_Reaction_Matrix'})
+        input_ws = 'plant_fba_testing'
+        input_fbamodel = 'PlantSEED_Arabidopsis_FBAModel'
+        input_expression_matrix = 'Ath_H13_matrix'
+        output_reaction_matrix = 'Ath_H13_Reaction_Matrix'
 
-    def reconstruct_plant_metabolism(self):
+        # Can't pass as a list until the multiselection bug in the UI is fixed
+        input_columns = ["H13_control_Athaliana_Trimm_paired",
+                         "H13_DC3000_Athaliana_Trimm_paired"]
+
+        input_params = {'input_ws': input_ws,
+                        'input_fbamodel': input_fbamodel,
+                        'input_expression_matrix': input_expression_matrix,
+                        'input_columns' : ",".join(input_columns),
+                        'output_reaction_matrix': output_reaction_matrix}
+
+        ret = self.getImpl().integrate_abundances_with_metabolism(self.getContext(), 
+                                                                  input_params)
+                       
+    def test_reconstruct_plant_metabolism(self):
         # Prepare test object in workspace        
         test_genome = 'Olucimarinus_v2.0'
         self.getWsClient().copy_object({'from':{'workspace':'PlantSEED_v3','name':test_genome},

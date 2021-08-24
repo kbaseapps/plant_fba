@@ -637,9 +637,6 @@ class IntegrateAppImpl:
         input_params["input_columns"]=conditions
 
         self.input_params = input_params
-        
-        for param in input_params:
-            print("PARAM __init__ : ",param," : ",input_params[param])
 
         # set in _load_expression_matrix()
         self.conditions_ids = list()
