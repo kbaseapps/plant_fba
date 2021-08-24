@@ -627,6 +627,15 @@ class IntegrateAppImpl:
 
         self.scratch = config['scratch']
         self.report_uuid = str(uuid.uuid4())
+        
+        # There is a bug in the UI that won't let me collect a
+        # a clean list of conditions, so I have to parse them
+        # from a comma-separated string
+        conditions = list()
+        for condition in input_params["input_columns"].split(','):
+            conditions.append(condition)
+        input_params["input_columns"]=conditions
+
         self.input_params = input_params
         
         for param in input_params:

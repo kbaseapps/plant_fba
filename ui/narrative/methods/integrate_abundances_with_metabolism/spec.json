@@ -34,7 +34,7 @@
         },
       	{
 	    "field_type" : "textsubdata",
-            "allow_multiple" : true,
+            "allow_multiple" : false,
             "optional" : true,
             "id" : "expression_conditions",
             "default_values" : [ "" ],

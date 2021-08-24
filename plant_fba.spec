@@ -15,7 +15,7 @@ module plant_fba {
 	string input_ws;
 	string input_expression_matrix;
 	string input_fbamodel;
-	list<string> input_columns;
+	string input_columns;
 	string output_reaction_matrix;
     } IntegrateAbundancesParams;
 

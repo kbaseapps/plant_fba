@@ -41,7 +41,7 @@ class plant_fba:
     ######################################### noqa
     VERSION = "1.1.1"
     GIT_URL = "git@github.com:kbaseapps/plant_fba.git"
-    GIT_COMMIT_HASH = "0ed04609fa441b7265254d6e7ff3837cf7e85fb6"
+    GIT_COMMIT_HASH = "6f0b5af5a458c5158b9f0007399653a256edcd14"
 
     #BEGIN_CLASS_HEADER
 
@@ -81,8 +81,8 @@ class plant_fba:
         :param input_params: instance of type "IntegrateAbundancesParams"
            (@optional input_columns) -> structure: parameter "input_ws" of
            String, parameter "input_expression_matrix" of String, parameter
-           "input_fbamodel" of String, parameter "input_columns" of list of
-           String, parameter "output_reaction_matrix" of String
+           "input_fbamodel" of String, parameter "input_columns" of String,
+           parameter "output_reaction_matrix" of String
         :returns: instance of type "ReportResults" -> structure: parameter
            "report_name" of String, parameter "report_ref" of String
         """
