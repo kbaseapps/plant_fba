@@ -1,9 +1,10 @@
 from bokeh.layouts import row, grid
-from bokeh.models import Slope, Select, ColumnDataSource, CustomJS
+from bokeh.models import Slope, Select, ColumnDataSource, CustomJS, NumeralTickFormatter
 from bokeh.plotting import figure, output_file, save
 
 import time
 import json
+import math
 
 from plant_fba.core.fetch_plantseed_impl import FetchPlantSEEDImpl
 #from fetch_plantseed_impl import FetchPlantSEEDImpl
@@ -46,7 +47,14 @@ class GenerateFigureImpl:
                 ##################################################################
                 # For the first scatterplot, it is optional
                 if( genome_features is not None or reaction_scores is not None ):
-                    bokeh_fig = figure()
+
+                    # Find range for axes
+                    x_max = math.ceil(max(genome_features[columns[first_column]]))
+                    y_max = math.ceil(max(genome_features[columns[second_column]]))
+                    plot_max = max([x_max,y_max])
+
+                    bokeh_fig = figure(x_range = (0.0,plot_max),
+                                       y_range = (0.0,plot_max))
                     bokeh_fig.xaxis.axis_label = columns[first_column]
                     bokeh_fig.yaxis.axis_label = columns[second_column]
                     bokeh_fig.title.text = "Genome Features Expression Abundances"
@@ -75,9 +83,13 @@ class GenerateFigureImpl:
                     ##################################################################
                     # Set up parent figure object
 
-                    bokeh_fig = figure(tooltips=TOOLTIPS)
+                    bokeh_fig = figure(tooltips=TOOLTIPS,
+                                       x_range = (0.0,1.0),
+                                       y_range = (0.0,1.0))
                     bokeh_fig.xaxis.axis_label = columns[first_column]
                     bokeh_fig.yaxis.axis_label = columns[second_column]
+                    bokeh_fig.xaxis.formatter = NumeralTickFormatter(format="0.0")
+                    bokeh_fig.yaxis.formatter = NumeralTickFormatter(format="0.0")
                     bokeh_fig.title.text = "Model Reactions Percentile Rank (p<0.01)"
 
                     ##################################################################
