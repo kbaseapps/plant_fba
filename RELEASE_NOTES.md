@@ -1,7 +1,7 @@
 # plant_fba release notes
 =========================================
 
-## v1.1.0
+## v1.2.0
 * Major update to the output of both Apps
 
     * "Reconstruct Plant Metabolism" has a new output table which
