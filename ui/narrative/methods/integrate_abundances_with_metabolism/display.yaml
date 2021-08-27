@@ -82,6 +82,17 @@ description : |
     different primary metabolic pathways, and how they may respond to
     different experimental conditions.</p>
 
+    <u><b>Data</b></u>
+    <ul>
+    <li><b>PlantSEED</b></li>
+
+    <ul style="list-style-type:none;"><li>The plant metabolic subsystems are curated as part of the <a href="https://github.com/ModelSEED/PlantSEED/tree/kbase_release">PlantSEED project</a>. The curation can be explored <a href="https://modelseed.org/genomes/Annotations">here</a></li></ul>
+
+    <li><b>Biochemistry</b></li>
+
+    <ul style="list-style-type:none;"><li>The biochemistry comes from the <a href="https://github.com/ModelSEED/ModelSEEDDatabase/tree/plant_kbase_release">ModelSEED Biochemistry Database</a>. The database can be explored <a href="https://modelseed.org/biochem/reactions">here</a></li></ul>
+    </ul>
+    
 publications :
     -
         display-text: |
