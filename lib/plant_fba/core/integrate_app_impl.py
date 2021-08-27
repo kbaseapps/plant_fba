@@ -199,7 +199,7 @@ class IntegrateAppImpl:
         html_lines.append(" with the <b>"+self.input_params['input_fbamodel']+"</b> FBAModel</br>")
         html_lines.append("Specifically, the app integrated the values from these chosen conditions in the ExpressionMatrix: <b>"+"</b>, <b>".join(self.conditions_ids)+"</b></br>")
         html_lines.append("The results of the integration are stored in the <b>"+self.input_params['output_reaction_matrix']+"</b> ReactionMatrix.</p><br/>")
-        html_lines.append('The results of the integration can be visualized in this <a href="'+table_html_file+'" target="_blank">Table</a></br>')
+        html_lines.append('The results of the integration are also tabulated in this <a href="'+table_html_file+'" target="_blank">Table</a></br>')
 
         if(len(self.conditions_ids)>1):
             html_lines.append('The results of the integration can be also be visualized in these <a href="'+figure_html_file+'" target="_blank">Scatterplots</a>')
