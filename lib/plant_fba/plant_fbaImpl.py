@@ -19,7 +19,7 @@ from plant_fba.core.fetch_plantseed_impl import FetchPlantSEEDImpl
 MSD_url = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/'
 MSD_tag = 'v1.1.1'
 MSD_tag = "7063bbffde4b40c01550dcb48b89107f28caa2b1" #adding_nad_transporters
-MSD_tag = "kbase_release" # as of 08/19/21 this points to 7063bbff
+MSD_tag = "plant_kbase_release" # as of 08/19/21 this points to 7063bbff
 
 #END_HEADER
 
