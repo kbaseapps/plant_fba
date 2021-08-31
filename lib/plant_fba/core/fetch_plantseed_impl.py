@@ -9,12 +9,9 @@ PS_tag = 'kbase_release'
 
 class FetchPlantSEEDImpl:
 
-    def fetch_reactions(self):
+    def fetch_reactions(self, PS_Roles):
 
         reactions_data = dict()
-
-        # Load these directly from PlantSEED_Roles.json
-        PS_Roles = json.load(urlopen(PS_url+PS_tag+'/Data/PlantSEED_v3/PlantSEED_Roles.json'))
 
         for entry in PS_Roles:
             if(entry['include'] is False):
@@ -73,8 +70,12 @@ class FetchPlantSEEDImpl:
         pass
 
 def main():
+
+    # Load these directly from PlantSEED_Roles.json
+    PS_Roles = json.load(urlopen(PS_url+PS_tag+'/Data/PlantSEED_v3/PlantSEED_Roles.json'))
+
     plantseed = FetchPlantSEEDImpl()
-    plantseed_data = plantseed.fetch_reactions()
+    plantseed_data = plantseed.fetch_reactions(PS_Roles)
     print(plantseed_data)
 
 if(__name__ == "__main__"):
