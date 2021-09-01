@@ -490,10 +490,14 @@ class plant_fba:
         html_string+="that annotation was only propagated for some localized Arabidopsis enzymes, and not others."
         html_string+="</ul></p>"
 
-        #GenerateTableImpl
+        # Fetch PlantSEED Data
+        with open(os.path.join("/kb/module/PlantSEED",
+                               "Data/PlantSEED_v3",
+                               "PlantSEED_Roles.json")) as plsd_fh:
+            PS_Roles = json.load(plsd_fh)
 
         plantseed = FetchPlantSEEDImpl()
-        reactions_data = plantseed.fetch_reactions()
+        reactions_data = plantseed.fetch_reactions(PS_Roles)
 
         table = GenerateTableImpl()
         table_html_string = table.generate_table(reactions_data, complexes=rxncplxs_dict)

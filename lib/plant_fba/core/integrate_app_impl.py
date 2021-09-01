@@ -653,8 +653,13 @@ class IntegrateAppImpl:
         # set in _compile_model_scores_percentiles
         self.mh_reactions_ids = list()
 
+        with open(os.path.join("/kb/module/PlantSEED",
+                               "Data/PlantSEED_v3",
+                               "PlantSEED_Roles.json")) as plsd_fh:
+            PS_Roles = json.load(plsd_fh)
+
         plantseed = FetchPlantSEEDImpl()
-        self.reactions_data = plantseed.fetch_reactions()
+        self.reactions_data = plantseed.fetch_reactions(PS_Roles)
 
     def integrate_abundances_with_metabolism(self):
 

@@ -109,8 +109,11 @@ class GenerateTableImpl:
 
 def main():
 
+    # Load these directly from PlantSEED_Roles.json
+    PS_Roles = json.load(urlopen(PS_url+PS_tag+'/Data/PlantSEED_v3/PlantSEED_Roles.json'))
+
     plantseed = FetchPlantSEEDImpl()
-    reactions_data = plantseed.fetch_reactions()
+    reactions_data = plantseed.fetch_reactions(PS_Roles)
 
     table = GenerateTableImpl()
     table_html_string = table.generate_table(reactions_data)

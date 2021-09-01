@@ -16,6 +16,9 @@ RUN pip install --upgrade pip && \
     pip install pandas && \
     pip install scipy
 
+# Loading PlantSEED data
+RUN git clone -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
+
 # -----------------------------------------
 
 COPY ./ /kb/module
