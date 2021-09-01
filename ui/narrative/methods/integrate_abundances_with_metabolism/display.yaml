@@ -61,7 +61,7 @@ description : |
     users to reconstruct genome-scale metabolic networks of plant
     primary metabolism. The documentation of the PlantSEED pipeline
     can be viewed <a
-    href="https://narrative.kbase.us/#appcatalog/app/plant_fba/reconstruct_plant_metabolism">here</a></p>.
+    href="https://narrative.kbase.us/#appcatalog/app/plant_fba/reconstruct_plant_metabolism">here</a>.</p>
 
     <p>The resulting metabolic reconstruction contains a set of
     gene-reaction links that can be used to integrate several kinds of
