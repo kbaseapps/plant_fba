@@ -16,11 +16,6 @@ from plant_fba.core.integrate_app_impl import IntegrateAppImpl
 from plant_fba.core.generate_table_impl import GenerateTableImpl
 from plant_fba.core.fetch_plantseed_impl import FetchPlantSEEDImpl
 
-MSD_url = 'https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/'
-MSD_tag = 'v1.1.1'
-MSD_tag = "7063bbffde4b40c01550dcb48b89107f28caa2b1" #adding_nad_transporters
-MSD_tag = "plant_kbase_release" # as of 08/19/21 this points to 7063bbff
-
 #END_HEADER
 
 
@@ -126,12 +121,19 @@ class plant_fba:
                 abbrev_cpt_dict[array[3]]=array[0]
                 cpt_name_dict[array[0]]=array[2]
 
-        MSD_reactions = json.load(urlopen(MSD_url+MSD_tag+'/Biochemistry/reactions.json'))
+        # Fetch and parse biochemistry data
+        with open(os.path.join("/kb/module/ModelSEEDDatabase",
+                               "Biochemistry",
+                               "reactions.json")) as msd_rxn_fh:
+            MSD_reactions = json.load(msd_rxn_fh)
         MSD_reactions_dict = dict()
         for entry in MSD_reactions:
             MSD_reactions_dict[entry['id']]=entry
 
-        MSD_compounds = json.load(urlopen(MSD_url+MSD_tag+'/Biochemistry/compounds.json'))
+        with open(os.path.join("/kb/module/ModelSEEDDatabase",
+                               "Biochemistry",
+                               "compounds.json")) as msd_rxn_fh:
+            MSD_compounds = json.load(msd_rxn_fh)
         MSD_compounds_dict = dict()
         for entry in MSD_compounds:
             MSD_compounds_dict[entry['id']]=entry

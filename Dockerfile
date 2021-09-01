@@ -19,6 +19,9 @@ RUN pip install --upgrade pip && \
 # Loading PlantSEED data
 RUN git clone -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
 
+# Loading Biochemistry data
+RUN git clone -b plant_kbase_release https://github.com/ModelSEED/ModelSEEDDatabase /kb/module/ModelSEEDDatabase
+
 # -----------------------------------------
 
 COPY ./ /kb/module
