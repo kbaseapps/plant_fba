@@ -38,7 +38,7 @@ class GenerateFigureImpl:
         figure_grid = list()
         for first_column in range(len(columns)):
             for second_column in range(len(columns)):
-                if(first_column <= second_column):
+                if(first_column >= second_column):
                     continue
 
                 # Row of figures for the pair of conditions
@@ -62,13 +62,13 @@ class GenerateFigureImpl:
                     genome_source = ColumnDataSource(data=dict(genome_features))
 
                     # Plot as black and visible
-                    scatter_fig = bokeh_fig.circle(x=columns[0], y=columns[1], source=genome_source,
+                    scatter_fig = bokeh_fig.circle(x=columns[first_column], y=columns[second_column], source=genome_source,
                                                    color='black', size=4, visible=True)
                     
                     reaction_source = ColumnDataSource(data=dict(reaction_scores))
 
                     # Plot as red
-                    scatter_fig = bokeh_fig.circle(x=columns[0], y=columns[1], source=reaction_source,
+                    scatter_fig = bokeh_fig.circle(x=columns[first_column], y=columns[second_column], source=reaction_source,
                                                    color='red', size=6, visible=True)
 
                     slope_line = Slope(gradient=1, y_intercept=0, line_color="red")
@@ -108,7 +108,7 @@ class GenerateFigureImpl:
                     # Store transformation
                     source_dict['All']=source
                     # Plot as black and visible
-                    scatter_fig = bokeh_fig.circle(x=columns[0], y=columns[1], source=source,
+                    scatter_fig = bokeh_fig.circle(x=columns[first_column], y=columns[second_column], source=source,
                                                    color='color', size='size', fill_alpha='fill_alpha',
                                                    visible=True)
                     # Store plot
@@ -128,7 +128,7 @@ class GenerateFigureImpl:
                         # Store transformation
                         source_dict[scatter]=source
                         # Plot as red but not visible
-                        scatter_fig = bokeh_fig.circle(x=columns[0], y=columns[1], source=source,
+                        scatter_fig = bokeh_fig.circle(x=columns[first_column], y=columns[second_column], source=source,
                                                        color='color', size='size', fill_alpha='fill_alpha',
                                                        visible=False)
                         # Store plot
