@@ -431,6 +431,10 @@ class IntegrateAppImpl:
                     reaction_percentile_comparison_dict['All']['reactions'].append(self.reactions_ids[reaction_index])
     
                 base_rxn = self.reactions_ids[reaction_index].split('_')[0]
+
+                if(base_rxn not in self.reactions_data):
+                    self.reactions_data[base_rxn]={'subsystems':['None']}
+
                 for ss in self.reactions_data[base_rxn]['subsystems']:
                     if(ss not in reaction_percentile_comparison_dict):
                         reaction_percentile_comparison_dict[ss]=dict()
@@ -514,6 +518,7 @@ class IntegrateAppImpl:
 
     def _integrate_abundances(self, model_obj, feature_lookup_dict, expdata_obj, condition_indices):
 
+        feature_check_list=list()
         reaction_values_matrix=list()
         reactions_ids=list()
         minmax_expscore_dict=dict()
@@ -552,6 +557,7 @@ class IntegrateAppImpl:
                         for feature in sbnt['feature_refs']:
                             feature=feature.split('/')[-1]
                             ftrs_str_list.append(feature)
+                            feature_check_list.append(feature)
                             feature_index = feature_lookup_dict[feature]
                             
                             ftr_score = expdata_obj['data']['data']['values'][feature_index][condition_index]
@@ -618,6 +624,9 @@ class IntegrateAppImpl:
             reaction_values_matrix.append(rxndata_row)
 
         fh.close()
+
+        if(len(feature_check_list)==0):
+            raise SystemExit('The FBAModel does not have any features!')
 
         self.reactions_ids=reactions_ids
         return (reaction_values_matrix, model_complexes_dict)
