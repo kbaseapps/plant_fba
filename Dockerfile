@@ -18,7 +18,8 @@ RUN pip install --upgrade pip && \
 
 # Loading PlantSEED data
 RUN echo "Current PlantSEED commit: 5520f62ed57e95589bc9e5e30871a0adfa27bff3"
-RUN git clone -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
+#RUN git clone -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
+RUN git clone -b summer_22 https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
 
 # Loading Biochemistry data
 RUN git clone -b plant_kbase_release https://github.com/ModelSEED/ModelSEEDDatabase /kb/module/ModelSEEDDatabase
