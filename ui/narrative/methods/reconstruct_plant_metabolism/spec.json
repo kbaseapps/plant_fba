@@ -17,9 +17,7 @@
    "parameters" : [
       {
          "id" : "input_genome",
-         "default_values" : [
-            ""
-         ],
+         "default_values" : [""],
          "advanced" : false,
          "field_type" : "text",
          "optional" : false,
@@ -27,6 +25,19 @@
          "text_options" : {
             "valid_ws_types" : [
                "KBaseGenomes.Genome","KBaseGenomeAnnotations.GenomeAnnotation"
+            ]
+         }
+      },
+      {
+         "id" : "input_template",
+         "default_values" : [""],
+         "advanced" : true,
+         "field_type" : "text",
+         "optional" : true,
+         "allow_multiple" : false,
+         "text_options" : {
+            "valid_ws_types" : [
+               "KBaseFBA.NewModelTemplate"
             ]
          }
       },
@@ -56,9 +67,17 @@
                "target_property" : "input_ws",
                "narrative_system_variable" : "workspace"
             },
+	    {
+               "target_property" : "template_ws",
+               "narrative_system_variable" : "workspace"
+            },
             {
                "input_parameter" : "input_genome",
                "target_property" : "input_genome"
+            },
+	    {
+               "input_parameter" : "input_template",
+               "target_property" : "template"
             },
             {
                "target_property" : "output_fbamodel",
