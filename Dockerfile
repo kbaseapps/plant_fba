@@ -17,12 +17,15 @@ RUN pip install --upgrade pip && \
     pip install scipy
 
 # Loading PlantSEED data
-RUN echo "Current PlantSEED commit: 5520f62ed57e95589bc9e5e30871a0adfa27bff3"
-#RUN git clone -v -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
-RUN git clone -v -b summer_22 https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
+#RUN git clone -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
+RUN git clone -b summer_22 https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
+RUN echo "Current PlantSEED commit: "
+RUN git --git-dir PlantSEED/.git log -1 --pretty=format:"%h"
 
 # Loading Biochemistry data
-RUN git clone -v -b plant_kbase_release https://github.com/ModelSEED/ModelSEEDDatabase /kb/module/ModelSEEDDatabase
+RUN git clone -b plant_kbase_release https://github.com/ModelSEED/ModelSEEDDatabase /kb/module/ModelSEEDDatabase
+RUN echo "Current ModelSEEDDatabase commit: "
+RUN git --git-dir ModelSEEDDatabase/.git log -1 --pretty=format:"%h"
 
 # -----------------------------------------
 
