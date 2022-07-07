@@ -20,12 +20,12 @@ RUN pip install --upgrade pip && \
 #RUN git clone -b kbase_release https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
 RUN git clone -b summer_22 https://github.com/ModelSEED/PlantSEED /kb/module/PlantSEED
 RUN echo "Current PlantSEED commit: "
-RUN git --git-dir PlantSEED/.git log -1 --pretty=format:"%h"
+RUN git --git-dir /kb/module/PlantSEED/.git log -1 --pretty=format:"%h"
 
 # Loading Biochemistry data
 RUN git clone -b plant_kbase_release https://github.com/ModelSEED/ModelSEEDDatabase /kb/module/ModelSEEDDatabase
 RUN echo "Current ModelSEEDDatabase commit: "
-RUN git --git-dir ModelSEEDDatabase/.git log -1 --pretty=format:"%h"
+RUN git --git-dir /kb/module/ModelSEEDDatabase/.git log -1 --pretty=format:"%h"
 
 # -----------------------------------------
 
