@@ -433,7 +433,11 @@ class IntegrateAppImpl:
                 base_rxn = self.reactions_ids[reaction_index].split('_')[0]
 
                 if(base_rxn not in self.reactions_data):
-                    self.reactions_data[base_rxn]={'subsystems':['None']}
+                    self.reactions_data[base_rxn]={'ecs':[],
+                                                   'roles':[],
+                                                   'classes':[],
+                                                   'subsystems':['None'],
+                                                   'compartments':[]}
 
                 for ss in self.reactions_data[base_rxn]['subsystems']:
                     if(ss not in reaction_percentile_comparison_dict):
