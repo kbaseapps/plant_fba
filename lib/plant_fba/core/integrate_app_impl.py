@@ -551,6 +551,9 @@ class IntegrateAppImpl:
                         ftrs_str_list=list()
                         for feature in sbnt['feature_refs']:
                             feature=feature.split('/')[-1]
+                            if(feature not in feature_lookup_dict):
+                                print("ModelReactionProtein feature "+feature+" not found in Expression Matrix")
+                                continue
                             ftrs_str_list.append(feature)
                             feature_index = feature_lookup_dict[feature]
                             
